@@ -22,8 +22,8 @@ The visualizations augment what Fitbit provides in their app. Fitbit visualizati
 
 ETL Python process needs to be run manually: *python -m etl.get_all_data*
     
-    * Prerequisite: set each endpoint response log "date" to earliest date desired to be retrieved.
-    * Note: API rate limits makes historical data retrieval take a while as code pauses for rate limit time-out.
+* Prerequisite: set each endpoint response log "date" to earliest date desired to be retrieved.
+* Note: API rate limits makes historical data retrieval take a while as code pauses for rate limit time-out.
 
 Node server needs to be started manually: *Node server.js*
 
@@ -31,30 +31,30 @@ Browse to: *http://localhost:3000/index.html*
 
 ## Endpoint data retrieved from API:
 
-Get Activity Intraday by Date - calories
-Get Activity Intraday by Date - distance
-Get Activity Intraday by Date - elevation
-Get Activity Intraday by Date - floors
-Get Activity Intraday by Date - steps
-Get Breathing Rate Intraday by Interval
-Get ECG Log List
-Get Heart Rate Intraday by Date
-Get HRV Intraday by Interval 
-Get Sleep Log by Date Range
-Get SpO2 Intraday by Interval
-Get Temperature (Skin) Summary by Date
-Get VO2 Max Summary by Interval
+* Get Activity Intraday by Date - calories
+* Get Activity Intraday by Date - distance
+* Get Activity Intraday by Date - elevation
+* Get Activity Intraday by Date - floors
+* Get Activity Intraday by Date - steps
+* Get Breathing Rate Intraday by Interval
+* Get ECG Log List
+* Get Heart Rate Intraday by Date
+* Get HRV Intraday by Interval 
+* Get Sleep Log by Date Range
+* Get SpO2 Intraday by Interval
+* Get Temperature (Skin) Summary by Date
+* Get VO2 Max Summary by Interval
 
 ## JSON responses inserted into MongoDB and visualized:
 
-Get Heart Rate Intraday by Date (viz) 
-Get Breathing Rate Intraday by Interval (viz)
-Get HRV Intraday by Interval (viz)
-Get Sleep Log by Date Range (viz)
-Get SpO2 Intraday by Interval (viz)
-Get VO2 Max Summary by Interval (viz)
-Get VO2 Max Summary by Interval (viz)
-Get Temperature (Skin) Summary by Date (no viz yet)
-Get Activity Intraday by Date - steps (no viz yet)
+* Get Heart Rate Intraday by Date (viz) 
+* Get Breathing Rate Intraday by Interval (viz)
+* Get HRV Intraday by Interval (viz)
+* Get Sleep Log by Date Range (viz)
+* Get SpO2 Intraday by Interval (viz)
+* Get VO2 Max Summary by Interval (viz)
+* Get VO2 Max Summary by Interval (viz)
+* Get Temperature (Skin) Summary by Date (no viz yet)
+* Get Activity Intraday by Date - steps (no viz yet)
 
 
