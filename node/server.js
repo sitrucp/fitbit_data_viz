@@ -54,19 +54,19 @@ async function main() {
           },
           {
             $group: {
-              _id: {
-                $dateTrunc: {
-                  date: "$dateTime",
-                  unit: "minute",
+                _id: {
+                    $subtract: [
+                        { $toDate: "$dateTime" },
+                        { $mod: [{ $toLong: { $toDate: "$dateTime" }}, 30000] }
+                    ]
                 },
-              },
-              heartRate: {
-                $avg: "$heartRate",
-              },
-              restingHeartRate: {
-                $first: "$restingHeartRate",
-              },
-            },
+                heartRate: {
+                    $max: "$heartRate"
+                },
+                restingHeartRate: {
+                    $first: "$restingHeartRate"
+                },
+            }
           },
           {
             $project: {

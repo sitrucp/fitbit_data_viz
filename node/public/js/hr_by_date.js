@@ -9,13 +9,23 @@ function loadHRByDateData() {
       const heartRate = data.map((item) => item.heartRate);
       const restingHeartRates = data.map((item) => item.restingHeartRate);
 
+    // Calculate colors for each heart rate based on zones
+    const heartRateColors = heartRate.map(rate => {
+        if (rate < 97) return 'rgb(0, 128, 128)';      // Normal
+        else if (rate < 120) return 'rgb(252, 191, 73)'; // Fat Burn
+        else if (rate < 148) return 'rgb(247, 127, 0)';   // Cardio
+        else return 'rgb(214, 40, 40)';                 // Peak
+        });
+
+        console.log(heartRateColors);
+
       var trace1 = {
         x: dates,
         y: heartRate,
         mode: "markers",
         type: "scatter",
         name: "Heart Rate",
-        marker: { color: "black", size: 3 },
+        marker: { color: heartRateColors, size: 3 },
       };
 
       var trace2 = {
