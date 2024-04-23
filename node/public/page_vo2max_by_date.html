@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>VO2 Max By Date Line</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <p><a href="index.html">Home</a></p>
+
+    <h2>VO2 Max By Date - Line</h2>
+
+    <label for="days">Enter number of days:</label>
+    <input type="number" id="days" value="2000" min="1" max="1000">
+    <button onclick="loadData()">Load Data</button>
+    <div id="vo2max_by_date_line" style="width:100%;height:600px;"></div>
+
+    <script>
+        window.onload = () => {
+            loadData();  // Initial update to draw all charts based on the default selection
+        };
+        function loadData() {
+            const days = document.getElementById('days').value;
+            fetch(`http://localhost:3000/api/vo2max?days=${days}`)
+                .then(response => response.json())
+                .then(data => {
+                    const dates = data.map(item => new Date(item.date));
+                    const vo2MaxHigh = data.map(item => item.vo2MaxHigh);
+                    const vo2MaxLow = data.map(item => item.vo2MaxLow);
+
+                    var traces = [{
+                        x: dates,
+                        y: vo2MaxHigh,
+                        mode: 'lines+markers',
+                        type: 'scatter',
+                        name: 'VO2 Max High',
+                        marker: {
+                            color: 'green'
+                        }
+                    },{
+                        x: dates,
+                        y: vo2MaxLow,
+                        mode: 'lines+markers',
+                        type: 'scatter',
+                        name: 'VO2 Max Low',
+                        marker: {
+                            color: 'red'
+                        }
+                    }];
+
+                    var layout = {
+                        title: 'VO2 Max By Date',
+                        xaxis: {
+                            title: 'Date',
+                            type: 'date',
+                            tickformat: "%Y-%m-%d",
+
+                            tickangle: -45
+                        },
+                        yaxis: {
+                            title: 'VO2 Max',
+                            range: ['auto',]
+                        },
+                    };
+
+                    Plotly.newPlot('vo2max_by_date_line', traces, layout);
+                })
+                .catch(error => console.error('Error loading data:', error));
+        }
+    </script>
+</body>
+
+</html>

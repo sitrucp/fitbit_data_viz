@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>HRV (RMSSD) By Date Ranges</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <p><a href="index.html">Home</a></p>
+    <h2>HRV By Date and Range</h2>
+    <label for="days">Enter number of days:</label>
+    <input type="number" id="days" value="365" min="1" max="1000">
+    <button onclick="loadData()">Load Data</button>
+    <div id="hrv_by_date_area" style="width:100%;height:600px;"></div>
+
+    <script>
+
+window.onload = () => {
+            loadData();  // Initial update to draw all charts based on the default selection
+        };
+        function loadData() {
+            const days = document.getElementById('days').value;
+            fetch(`http://localhost:3000/api/hrv?days=${days}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Group data by date and rmssdBinRange
+                    const groupedData = {};
+                    data.forEach(item => {
+                        const date = (new Date(item.dateTime)).toISOString().split('T')[0]; // normalize date to YYYY-MM-DD format
+                        const range = item.rmssdBinRange;
+                        if (!groupedData[date]) {
+                            groupedData[date] = {};
+                        }
+                        if (!groupedData[date][range]) {
+                            groupedData[date][range] = 0;
+                        }
+                        groupedData[date][range]++;
+                    });
+
+                    // Prepare to sort ranges
+                    const ranges = Array.from(new Set(data.map(item => item.rmssdBinRange)));
+
+                    // Custom sort function for ranges including '100+'
+                    ranges.sort((a, b) => {
+                        if (a === '100+') return 1; // Always place '100+' at the end
+                        if (b === '100+') return -1;
+                        return parseFloat(a) - parseFloat(b); // Numeric sort based on the first number
+                    });
+                
+                    // Prepare traces for Plotly
+                    const traces = [];
+                    ranges.forEach(range => {
+                        const x = [];
+                        const y = [];
+                        for (const date in groupedData) {
+                            x.push(date);
+                            const total = Object.values(groupedData[date]).reduce((a, b) => a + b, 0);
+                            y.push((groupedData[date][range] || 0) / total * 100); // Convert count to percentage
+                        }
+                        traces.push({
+                            x: x,
+                            y: y,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: range,
+                            stackgroup: 'one'
+                        });
+                    });
+
+                    var layout = {
+                        title: 'HRV (RMSSD) By Date - Range Bins 100% Stacked',
+                        yaxis: { title: 'Percent Total', ticksuffix: '%' },
+                        xaxis: {
+                            title: '', // Simplify or remove if not needed
+                            type: 'date',
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d", // Ensure that only the date is displayed
+                            tickvals: Object.keys(groupedData), // Specify tick values to ensure no redundancy
+                            tickangle: -45
+                        },
+                    };
+
+                    Plotly.newPlot('hrv_by_date_area', traces, layout);
+                })
+                .catch(error => console.error('Error loading data:', error));
+        }
+    </script>
+
+
+</body>
+
+</html>
