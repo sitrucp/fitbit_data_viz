@@ -7,7 +7,7 @@ def get_data(start_date, end_date):
     # Set endpoint parmeters
     module_str = 'get_ep_hrv_intraday_by_interval'
 
-    # hrv Get HRV Intraday by Interval 
+    # Get HRV Intraday by Interval 
     # https://dev.fitbit.com/build/reference/web-api/intraday/get-hrv-intraday-by-interval/
     # https://api.fitbit.com/1/user/-/hrv/date/2021-10-01/2021-10-04/all.json
     # Maximum range: 30 days

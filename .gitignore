@@ -1,3 +1,4 @@
+.gitignore
 auth_tokens.json
 json_data/
 viz_standalone/
