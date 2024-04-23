@@ -20,10 +20,10 @@ CLIENT_ID = config_fitbit["CLIENT_ID"]
 CLIENT_SECRET = config_fitbit["CLIENT_SECRET"]
 
 # Get the absolute path of the CURRENT script's directory
-script_dir = os.path.dirname(__file__) 
+script_dir = os.path.dirname(__file__)
 TOKEN_FILE_PATH = os.path.join(script_dir, "auth_tokens.json")
 LOG_FILE_PATH = os.path.join(script_dir, 'activity_log.log')
-DATA_DIR_PATH = os.path.join(script_dir, "..", "data")
+DATA_DIR_PATH = os.path.join(script_dir, "..", "json_data")
 
 # Logging function
 def setup_logging():
