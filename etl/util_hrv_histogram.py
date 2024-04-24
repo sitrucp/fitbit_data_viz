@@ -1,3 +1,7 @@
+# util_hrv_histogram.py
+# utility file not used in regular operations
+# create histogram from hrv data to see distribution
+
 import sys
 import numpy as np
 import pandas as pd

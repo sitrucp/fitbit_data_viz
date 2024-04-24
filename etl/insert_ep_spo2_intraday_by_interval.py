@@ -1,9 +1,14 @@
+# insert_ep_spo2_intraday_by_interval.py
+# upserts data into MongoDB collection
+
 import json
 import glob
 import os
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from etl.response_log import get_last_response
+from etl.db_connection import get_database
+from etl.db_connection import get_database
 
 def compute_daily_average(measurements):
     """Compute the average SpO2 value from a list of measurements."""
@@ -17,9 +22,8 @@ def main():
     # Define module
     module_name_str = "get_ep_spo2_intraday_by_interval"
 
-    # Setup MongoDB connection
-    client = MongoClient('mongodb://localhost:27017')
-    db = client['fitbit']
+    # Setup MongoDB connection using the centralized connection function
+    db = get_database()
     collection = db["spo2_intraday_by_date"]
 
     # Get json files

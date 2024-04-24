@@ -12,7 +12,6 @@ import fitbit
 import base64
 from etl.response_log import write_response_log
 
-
 # ---- Configuration ----
 key_path = os.getenv('key_path')
 sys.path.insert(0, key_path)

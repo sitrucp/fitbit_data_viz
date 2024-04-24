@@ -1,4 +1,5 @@
 # response_log.py
+# reads response_log.json file to get dates
 
 import json
 import os

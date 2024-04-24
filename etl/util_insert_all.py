@@ -1,5 +1,6 @@
-# get_all_insert.py
-# use to run all of the active insert modules
+# util_insert_all.py
+# utility file not used in regular operations
+# used to run all of the active insert modules independent of get data from Fitbit
 
 from datetime import datetime
 import importlib

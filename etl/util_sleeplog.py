@@ -1,3 +1,7 @@
+# util_sleeplog.py
+# utility file not used in regular operations
+# update MongdoDB collection date field name
+
 from pymongo import MongoClient, UpdateOne
 
 # Setup MongoDB connection

@@ -1,3 +1,7 @@
+# util_update_spo2_date.py
+# utility file not used in regular operations
+# update MongdoDB collection date field type
+
 from pymongo import MongoClient
 from datetime import datetime
 
