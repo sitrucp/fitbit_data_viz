@@ -20,14 +20,26 @@ The visualizations augment what Fitbit provides in their app. Fitbit visualizati
 
 ## Usage:
 
-ETL Python process needs to be run manually: *python -m etl.get_all_data*
-    
-* Prerequisite: set each endpoint response log "date" to earliest date desired to be retrieved.
-* Note: API rate limits makes historical data retrieval take a while as code pauses for rate limit time-out.
+1) Assume you already have a Fitbit dev account to create a new API app and get the app's CLIENT_ID and CLIENT_SECRET. 
 
-Node server needs to be started manually: *Node server.js*
+2) Create a credentials file to contain CLIENT_ID and CLIENT_SECRET. Create an environment variable named "key_file" so it can be called in the code. Format as below:
 
-Browse to: *http://localhost:3000/index.html* 
+config_fitbit = {
+    'CLIENT_ID': 'xxx',
+    'CLIENT_SECRET': 'xxx'
+    }
+
+3) Run *auth_get_tokens.py* to authenticate in pop-up browser on Fitbit login. This will save a file *auth_tokens.json* that contains tokens for subsequent authentication. You only have to run this once to get the token file. Subsequently, the ETL code includes a built-in process to use the refresh token to get new tokens if they are expired.
+
+3) Install Node in the project folder.
+
+4) Node server needs to be started manually: *Node server.js*
+
+5) Run the ETL Python process to get Fitbit data by running: *python -m etl.get_all_data*. Do this daily or whenever you want to get data.
+
+It is recommended to start off by downloading a small of amount of data, say the last two days' data due to API rate limiting. To do this, modify *response_log.json* date field values for all endpoints to a date two days ago. When you run get_all_data it will use these dates for date range. Afterwards you can get additional day's data but note that the API rate limits makes historical data retrieval take a while as the code pauses for rate limit time-outs.
+
+6) Browse to *http://localhost:3000/* and view reports.
 
 ## Endpoint data retrieved from API:
 

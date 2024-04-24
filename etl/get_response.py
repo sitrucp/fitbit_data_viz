@@ -1,3 +1,5 @@
+# get_response.py
+
 import logging
 import pandas as pd
 import requests
@@ -16,8 +18,8 @@ key_path = os.getenv('key_path')
 sys.path.insert(0, key_path)
 from config_fitbit import config_fitbit
 
-CLIENT_ID = config_fitbit["CLIENT_ID"]
-CLIENT_SECRET = config_fitbit["CLIENT_SECRET"]
+client_id = config_fitbit["CLIENT_ID"]
+client_secret = config_fitbit["CLIENT_SECRET"]
 
 # Get the absolute path of the CURRENT script's directory
 script_dir = os.path.dirname(__file__)
