@@ -91,7 +91,7 @@ class FitbitAuthenticator:
             return None
 
 ### ---- Instantiate authenticator at the module level -----###
-authenticator = FitbitAuthenticator(CLIENT_ID, CLIENT_SECRET, TOKEN_FILE_PATH)
+authenticator = FitbitAuthenticator(client_id, client_secret, TOKEN_FILE_PATH)
 
 # Make request function
 def make_request(start_date, end_date, base_url, module_str, endpoint_type, max_days=None):
