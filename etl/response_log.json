@@ -1,44 +1,44 @@
 {
     "get_ep_activities_calories_intraday_by_date": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:34"
+            "timestamp": "2024-04-25-09:05:14"
         }
     ],
     "get_ep_activities_distance_intraday_by_date": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:36"
+            "timestamp": "2024-04-25-09:05:16"
         }
     ],
     "get_ep_activities_elevation_intraday_by_date": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:37"
+            "timestamp": "2024-04-25-09:05:18"
         }
     ],
     "get_ep_activities_floors_intraday_by_date": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:39"
+            "timestamp": "2024-04-25-09:05:19"
         }
     ],
     "get_ep_activities_steps_intraday_by_date": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:40"
+            "timestamp": "2024-04-25-09:05:21"
         }
     ],
     "get_ep_ecg_intraday_by_date": [
         {
             "date": "2024-04-24",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:41"
+            "timestamp": "2024-04-25-09:05:22"
         }
     ],
     "get_ep_hr_intraday_by_date": [

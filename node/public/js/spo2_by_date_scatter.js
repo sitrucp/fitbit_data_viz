@@ -1,6 +1,10 @@
 function loadSpo2ByDateScatterData() {
-  const days = document.getElementById("days").value;
-  fetch(`http://localhost:3000/api/spo2?days=${days}`)
+
+    // Get page dates
+    const startDate = document.getElementById("start").value;
+    const endDate = document.getElementById("end").value;
+
+  fetch(`http://localhost:3000/api/spo2?start=${startDate}&end=${endDate}`)
     .then((response) => response.json())
     .then((data) => {
       const dates = data.map((item) => new Date(item.dateTime));

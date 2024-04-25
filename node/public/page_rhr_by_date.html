@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Heart Rate By Date</title>
+    <title>Resting Heart Rate By Date</title>
 
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
@@ -11,7 +11,7 @@
 <body>
     <p><a href="index.html">Home</a></p>
 
-    <h2>Heart Rate By Date - Scatter Chart With Range Colors</h2>
+    <h2>Resting Heart Rate By Date - Line Chart</h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -19,7 +19,7 @@
     <input type="date" id="end">
     <button onclick="loadData()">Load Data</button>
 
-    <div id="hr_by_date" style="width:100%;height:600px;"></div>
+    <div id="rhr_by_date" style="width:100%;height:600px;"></div>
 
     <script>
 
@@ -29,6 +29,7 @@
             let startDate = new Date();
             startDate.setHours(0, 0, 0, 0);
             endDate.setHours(0, 0, 0, 0);
+            startDate.setDate(endDate.getDate()-2000);
             document.getElementById('start').valueAsDate = startDate;
             document.getElementById('end').valueAsDate = endDate;
             loadData();  // Initial update to draw all charts based on the default selection
@@ -38,51 +39,23 @@
             const startDate = document.getElementById('start').value;
             const endDate = document.getElementById('end').value;
 
-            fetch(`http://localhost:3000/api/hr?start=${startDate}&end=${endDate}`)
+            fetch(`http://localhost:3000/api/rhr?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
                 .then(data => {
-                    const dates = data.map(item => new Date(item.dateTime));
-                    const heartRates = data.map(item => item.heartRate);
+                    const dates = data.map(item => new Date(item.date));
                     const restingHeartRates = data.map(item => item.restingHeartRate);
-                    const age = 58;
-                    const restingHeartRate = 53;
-                    const maxHeartRate = 220 - age;
-                    const heartRateReserve = maxHeartRate - restingHeartRate;
 
-                    // Calculate zone thresholds based on Heart Rate Reserve (HRR)
-                    const zone1UpperLimit = restingHeartRate + heartRateReserve * 0.5;
-                    const zone2UpperLimit = restingHeartRate + heartRateReserve * 0.65;
-                    const zone3UpperLimit = restingHeartRate + heartRateReserve * 0.75;
-                    const zone4UpperLimit = restingHeartRate + heartRateReserve * 0.9;
-
-                    // Calculate colors for each heart rate based on dynamically calculated zones
-                    const heartRateColors = heartRates.map(rate => {
-                        if (rate < zone1UpperLimit) return 'rgb(0, 128, 128)';      // Normal
-                        else if (rate < zone2UpperLimit) return 'rgb(252, 191, 73)'; // Fat Burn
-                        else if (rate < zone3UpperLimit) return 'rgb(247, 127, 0)';   // Cardio
-                        else return 'rgb(214, 40, 40)';                             // Peak
-                    });
-
-                    var trace1 = {
-                        x: dates,
-                        y: heartRates,
-                        mode: 'markers',
-                        type: 'scatter',
-                        name: 'Heart Rate',
-                        marker: { color: heartRateColors, size: 5 },
-                    };
-
-                    var trace2 = {
+                    var traces = [{
                         x: dates,
                         y: restingHeartRates,
-                        mode: 'lines',
+                        mode: 'lines+markers',
                         type: 'scatter',
                         name: 'Resting Heart Rate',
                         marker: { color: 'rgba(255, 99, 132, 1)', size: 3 }, // pink
-                    };
+                    }];
 
                     var layout = {
-                        title: 'Heart Rate By Date',
+                        title: 'Resting Heart Rate By Date',
                         xaxis: {
                             title: '', // Consider removing if not necessary
                             type: 'date',
@@ -108,7 +81,7 @@
                         autosize: true
                     };
 
-                    Plotly.newPlot('hr_by_date', [trace1, trace2], layout);
+                    Plotly.newPlot('rhr_by_date', traces, layout);
                 })
                 .catch(error => {
                     console.error('Error loading data:', error);

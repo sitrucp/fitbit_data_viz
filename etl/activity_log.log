@@ -85,3 +85,5 @@
 2024-04-24 10:31:47 - Request success: vo2max_intraday_by_interval_2024_04_24.json - Rate Limit Remaining: 150 - Rate Limit Reset: 1695
 2024-04-24 10:31:48 - Request success: tempskin_by_date_2024_04_23.json - Rate Limit Remaining: 150 - Rate Limit Reset: 1694
 2024-04-24 10:31:49 - Request success: tempskin_by_date_2024_04_24.json - Rate Limit Remaining: 150 - Rate Limit Reset: 1693
+2024-04-25 09:05:13 - Request success: activities_calories_intraday_by_date_2024_04_24.json - Rate Limit Remaining: 150 - Rate Limit Reset: 3287
+2024-04-25 09:05:14 - Request success: activities_calories_intraday_by_date_2024_04_25.json - Rate Limit Remaining: 150 - Rate Limit Reset: 3286

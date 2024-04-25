@@ -1,6 +1,10 @@
 function loadHrvByDateScatterData() {
-  const days = document.getElementById("days").value;
-  fetch(`http://localhost:3000/api/hrv?days=${days}`)
+
+    // Get page dates
+    const startDate = document.getElementById("start").value;
+    const endDate = document.getElementById("end").value;
+    
+  fetch(`http://localhost:3000/api/hrv?start=${startDate}&end=${endDate}`)
     .then((response) => response.json())
     .then((data) => {
       const dates = data.map((item) => new Date(item.dateTime));
@@ -28,7 +32,7 @@ function loadHrvByDateScatterData() {
 
       var layout = {
         title: {
-            text: "HRV By Time",
+            text: "HRV By Date",
             x: 0.01, // Aligns the title to the left
             xanchor: 'left' // Anchors the title text to the left edge of its container
         },

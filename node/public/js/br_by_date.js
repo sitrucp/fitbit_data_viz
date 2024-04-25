@@ -1,6 +1,10 @@
 function loadBrByDateScatterData() {
-    const days = document.getElementById('days').value;
-    fetch(`http://localhost:3000/api/br?days=${days}`)
+
+    // Get page dates
+    const startDate = document.getElementById("start").value;
+    const endDate = document.getElementById("end").value;
+
+    fetch(`http://localhost:3000/api/br?start=${startDate}&end=${endDate}`)
         .then(response => response.json())
         .then(data => {
             const fullSleepBr = data.map(item => item.fullSleepBr);

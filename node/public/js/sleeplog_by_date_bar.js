@@ -1,6 +1,10 @@
 function loadSleepLogData() {
-  const days = document.getElementById("days").value; // Assuming there's an input field to select days
-  fetch(`http://localhost:3000/api/sleeplog?days=${days}`)
+
+    // Get page dates
+    const startDate = document.getElementById("start").value;
+    const endDate = document.getElementById("end").value;
+    
+  fetch(`http://localhost:3000/api/sleeplog?start=${startDate}&end=${endDate}`)
     .then((response) => response.json())
     .then((data) => {
       const datesStart = data.map((item) => new Date(item.segment_start_time));

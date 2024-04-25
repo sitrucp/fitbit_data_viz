@@ -1,6 +1,6 @@
 # Fitbit Web API Data ETL and Visualization
 
-This repo uses the <a href="https://dev.fitbit.com/build/reference/web-api/">Fitbit Web API</a> with Python to retrieve and save API responses as JSON files. The JSON files are then loaded into a MongoDB database. Node is used to serve the MongoDB data to HTML pages containing Plotly.js visualizations.
+This repo uses the <a href="https://dev.fitbit.com/build/reference/web-api/">Fitbit Web API</a> with Python to retrieve and save API responses as JSON files. The JSON files are then loaded into a MongoDB database. Node and Express.js are used to serve the MongoDB data to the HTML pages containing Plotly.js visualizations.
 
 Not all Fitbit web API endpoints are retrieved and not all of the JSON response data is being loaded and visualized. Transformation of the data occurs either before it is loaded to MongoDB, in the Node API server or the HTML page Javascript.
 

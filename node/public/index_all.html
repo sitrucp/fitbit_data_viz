@@ -24,8 +24,11 @@
 
 <body>
     <h2>Fitbit Data Visualizations - Single page | <a href="index.html">Large charts</a></h2>
-    <label for="days">Enter number of days:</label>
-    <input type="number" id="days" value="1" min="1" max="1000">
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
     <button onclick="updateCharts()">Load Data</button>
 
     <div id="hr_by_date" class="chart-container"></div>

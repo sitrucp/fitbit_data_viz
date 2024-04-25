@@ -1,14 +1,21 @@
 function updateCharts() {
-    const days = document.getElementById('days').value;
-    loadHRByDateData(days);
-    loadHrvByDateAreaData(days);
-    loadHrvByDateScatterData(days);
-    loadSpo2ByDateBarData(days);
-    loadSpo2ByDateScatterData(days);
-    loadSleepLogData(days);
-    loadBrByDateScatterData(days);
+    loadHRByDateData();
+    loadHrvByDateAreaData();
+    loadHrvByDateScatterData();
+    loadSpo2ByDateBarData();
+    loadSpo2ByDateScatterData();
+    loadSleepLogData();
+    loadBrByDateScatterData();
 }
 
 window.onload = () => {
-    updateCharts();  // Initial update to draw all charts based on the default selection
+  // Set default dates
+  let endDate = new Date();
+  let startDate = new Date();
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
+  document.getElementById("start").valueAsDate = startDate;
+  document.getElementById("end").valueAsDate = endDate;
+
+  updateCharts(); // Initial update to draw all charts based on the default selection
 };

@@ -18,14 +18,65 @@ async function main() {
     console.log("Connected to MongoDB");
     const db = client.db(dbName);
 
+    app.get("/api/br", async (req, res) => {
+        let { start, end } = req.query;
+        // Set defaults to today's date if not provided
+        const today = new Date();  // Gets the current date and time
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);   
+        
+        const startDate = start ? new Date(start) : today;
+        const endDate = end ? new Date(end) : todayEnd;
+      
+        console.log(`Fetching Breathing Rate data from ${startDate.toISOString()} to ${endDate.toISOString()}...`);
+      
+        try {
+          const collection = db.collection("br_by_date");
+          const pipeline = [
+            {
+              $match: {
+                date: {
+                    $gte: startDate.toISOString().substring(0, 10),
+                    $lte: endDate.toISOString().substring(0, 10),
+                },
+              },
+            },
+            {
+              $project: {
+                date: 1,
+                fullSleepBr: 1,
+                remSleepBr: 1,
+                deepSleepBr: 1,
+                lightSleepBr: 1,
+                _id: 0,
+              },
+            },
+          ];
+          console.log("Executing Breathing Rate aggregation pipeline...");
+          const data = await collection.aggregate(pipeline).toArray();
+          console.log(
+            `Breathing Rate data aggregation complete. Number of records fetched: ${data.length}`
+          );
+      
+          res.json(data);
+        } catch (error) {
+          console.error("Error fetching Breathing Rate data: ", error);
+          res.status(500).send("Error fetching Breathing Rate data: " + error.message);
+        }
+      });
+
     app.get("/api/hr", async (req, res) => {
-      let days = parseInt(req.query.days) || 1;
-      days = Math.max(days - 1, 0); // Adjust for today
-      console.log(`Fetching HR data for the last ${days} days...`);
-      const now = new Date();
-      const endDate = new Date(now.setHours(23, 59, 59, 999));
-      const startDate = new Date(now.setHours(0, 0, 0, 0));
-      startDate.setDate(endDate.getDate() - days);
+        let { start, end } = req.query;
+        // Set defaults to today's date if not provided
+        let today = new Date();
+        today.setHours(0, 0, 0, 0);  // Start of today
+        let todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);  // End of today
+      
+        const startDate = start ? new Date(start) : today;
+        const endDate = end ? new Date(end) : todayEnd;
+      
+        console.log(`Fetching Heart Rate data from ${startDate.toISOString()} to ${endDate.toISOString()}...`);
 
       try {
         const collection = db.collection("hr_intraday_by_date");
@@ -99,20 +150,69 @@ async function main() {
       }
     });
 
-    app.get("/api/spo2", async (req, res) => {
-      let days = parseInt(req.query.days) || 1;
-      days = Math.max(days - 1, 0); // Subtract 1 to make `days = 1` indicate today
-      console.log(`Fetching SpO2 data for the last ${days} days...`);
-      const now = new Date();
-      const endDate = new Date(now.setHours(23, 59, 59, 999)); // End of the current day
-      const startDate = new Date(now.setHours(0, 0, 0, 0)); // Start of the current day
+    app.get("/api/rhr", async (req, res) => {
+        let { start, end } = req.query;
+        // Set defaults to today's date if not provided
+        let today = new Date();
+        today.setHours(0, 0, 0, 0);  // Start of today
+        let todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);  // End of today
+      
+        const startDate = start ? new Date(start) : today;
+        const endDate = end ? new Date(end) : todayEnd;
+      
+        console.log(`Fetching Resting Heart Rate data from ${startDate.toISOString()} to ${endDate.toISOString()}...`);
 
-      startDate.setDate(endDate.getDate() - days);
-
-      if (days > 0) {
-        startDate.setDate(endDate.getDate() - days);
+      try {
+        const collection = db.collection("hr_intraday_by_date");
+        const pipeline = [
+            {
+              $match: {
+                date: {
+                    $gte: startDate.toISOString().substring(0, 10),
+                    $lte: endDate.toISOString().substring(0, 10),
+                },
+              },
+            },
+            {
+              $project: {
+                date: 1,
+                restingHeartRate: 1,
+                _id: 0,
+              },
+            },
+          ];
+        console.log("Executing RHR aggregation pipeline...");
+        const data = await collection.aggregate(pipeline).toArray();
+        console.log(data);
+        console.log(
+          `RHR data aggregation complete. Number of records fetched: ${data.length}`
+        );
+        res.json(
+          data.map((item) => ({
+            date: item.date,
+            restingHeartRate: item.restingHeartRate,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching RHR data: ", error);
+        res.status(500).send("Error fetching RHR data: " + error.message);
       }
+    });
 
+    app.get("/api/spo2", async (req, res) => {
+        let { start, end } = req.query;
+        // Set defaults to today's date if not provided
+        let today = new Date();
+        today.setHours(0, 0, 0, 0);  // Start of today
+        let todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);  // End of today
+      
+        const startDate = start ? new Date(start) : today;
+        const endDate = end ? new Date(end) : todayEnd;
+      
+        console.log(`Fetching SpO2 data from ${startDate.toISOString()} to ${endDate.toISOString()}...`);
+      
       try {
         const collection = db.collection("spo2_intraday_by_date");
         const pipeline = [
@@ -150,18 +250,17 @@ async function main() {
     });
 
     app.get("/api/hrv", async (req, res) => {
-      let days = parseInt(req.query.days) || 1;
-      days = Math.max(days - 1, 0); // Subtract 1 to make `days = 1` indicate today
-      console.log(`Fetching HRV data for the last ${days} days...`);
-      const now = new Date();
-      const endDate = new Date(now.setHours(23, 59, 59, 999)); // End of the current day
-      const startDate = new Date(now.setHours(0, 0, 0, 0)); // Start of the current day
-
-      startDate.setDate(endDate.getDate() - days);
-
-      if (days > 0) {
-        startDate.setDate(endDate.getDate() - days);
-      }
+        let { start, end } = req.query;
+        // Set defaults to today's date if not provided
+        let today = new Date();
+        today.setHours(0, 0, 0, 0);  // Start of today
+        let todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);  // End of today
+      
+        const startDate = start ? new Date(start) : today;
+        const endDate = end ? new Date(end) : todayEnd;
+      
+        console.log(`Fetching HRV data from ${startDate.toISOString()} to ${endDate.toISOString()}...`);
 
       try {
         const collection = db.collection("hrv_intraday_by_date");
@@ -205,15 +304,17 @@ async function main() {
     });
 
     app.get("/api/sleeplog", async (req, res) => {
-        let days = parseInt(req.query.days) || 1;
-        days = Math.max(days - 1, 0); // Subtract 1 to make `days = 1` indicate today
-        console.log(`Fetching Sleeplog data for the last ${days} days...`);
-        
-        const endDate = new Date();
-        endDate.setHours(23, 59, 59, 999); // Set end of the current day
-        const startDate = new Date();
-        startDate.setHours(0, 0, 0, 0); // Set start of the current day
-        startDate.setDate(endDate.getDate() - days);
+        let { start, end } = req.query;
+        // Set defaults to today's date if not provided
+        let today = new Date();
+        today.setHours(0, 0, 0, 0);  // Start of today
+        let todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);  // End of today
+      
+        const startDate = start ? new Date(start) : today;
+        const endDate = end ? new Date(end) : todayEnd;
+      
+        console.log(`Fetching Sleep Log data from ${startDate.toISOString()} to ${endDate.toISOString()}...`);
       
         try {
           const collection = db.collection("sleeplog_by_date");
@@ -305,62 +406,18 @@ async function main() {
         }
       });
 
-      app.get("/api/br", async (req, res) => {
-        let days = parseInt(req.query.days) || 1;
-        days = Math.max(days - 1, 0); // Subtract 1 to make `days = 1` indicate today
-        console.log(`Fetching Breathing Rate data for the last ${days} days...`);
-        
-        const endDate = new Date();
-        endDate.setHours(23, 59, 59, 999); // Set end of the current day
-        const startDate = new Date();
-        startDate.setHours(0, 0, 0, 0); // Set start of the current day
-        startDate.setDate(endDate.getDate() - days);
-      
-        try {
-          const collection = db.collection("br_by_date");
-          const pipeline = [
-            {
-              $match: {
-                date: {
-                    $gte: startDate.toISOString().substring(0, 10),
-                    $lte: endDate.toISOString().substring(0, 10),
-                },
-              },
-            },
-            {
-              $project: {
-                date: 1,
-                fullSleepBr: 1,
-                remSleepBr: 1,
-                deepSleepBr: 1,
-                lightSleepBr: 1,
-                _id: 0,
-              },
-            },
-          ];
-          console.log("Executing Breathing Rate aggregation pipeline...");
-          const data = await collection.aggregate(pipeline).toArray();
-          console.log(
-            `Breathing Rate data aggregation complete. Number of records fetched: ${data.length}`
-          );
-      
-          res.json(data);
-        } catch (error) {
-          console.error("Error fetching Breathing Rate data: ", error);
-          res.status(500).send("Error fetching Breathing Rate data: " + error.message);
-        }
-      });
-
       app.get("/api/vo2max", async (req, res) => {
-        let days = parseInt(req.query.days) || 1;
-        days = Math.max(days - 1, 0); // Subtract 1 to make `days = 1` indicate today
-        console.log(`Fetching VO2 Max data for the last ${days} days...`);
-        
-        const endDate = new Date();
-        endDate.setHours(23, 59, 59, 999); // Set end of the current day
-        const startDate = new Date();
-        startDate.setHours(0, 0, 0, 0); // Set start of the current day
-        startDate.setDate(endDate.getDate() - days);
+        let { start, end } = req.query;
+        // Set defaults to today's date if not provided
+        let today = new Date();
+        today.setHours(0, 0, 0, 0);  // Start of today
+        let todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);  // End of today
+      
+        const startDate = start ? new Date(start) : today;
+        const endDate = end ? new Date(end) : todayEnd;
+      
+        console.log(`Fetching VO2 Max data from ${startDate.toISOString()} to ${endDate.toISOString()}...`);
       
         try {
           const collection = db.collection("vo2max_by_date");

@@ -1,6 +1,10 @@
 function loadHrvByDateAreaData() {
-    const days = document.getElementById('days').value;
-    fetch(`http://localhost:3000/api/hrv?days=${days}`)
+
+    // Get page dates
+    const startDate = document.getElementById("start").value;
+    const endDate = document.getElementById("end").value;
+    
+    fetch(`http://localhost:3000/api/hrv?start=${startDate}&end=${endDate}`)
         .then(response => response.json())
         .then(data => {
             // Group data by date and rmssdBinRange
