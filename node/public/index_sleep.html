@@ -11,7 +11,14 @@
 
 
     <style>
-        .chart-container {
+        .chart-container-hourly {
+            width: 99%;
+            height: 190px;
+            padding: 0;
+            margin: 10px;
+            border: 1px solid black; 
+        }
+        .chart-container-date {
             width: 99%;
             height: 200px;
             padding: 0;
@@ -23,7 +30,7 @@
 </head>
 
 <body>
-    <h2>Fitbit Data Visualizations - Single page | <a href="index.html">Large charts</a></h2>
+    <h2>Fitbit Data Visualizations - Sleep Summary | <a href="index.html">Individual Charts</a></h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -31,13 +38,13 @@
     <input type="date" id="end">
     <button onclick="updateCharts()">Load Data</button>
 
-    <div id="hr_by_date" class="chart-container"></div>
-    <div id="spo2_by_date_scatter" class="chart-container"></div>
-    <div id="hrv_by_date_scatter" class="chart-container"></div>
-    <div id="spo2_by_date_bar" class="chart-container"></div>
-    <div id="br_by_date_scatter" class="chart-container"></div>
-    <div id="sleeplog_by_date_bar" class="chart-container"></div>
-    <div id="hrv_by_date_area" class="chart-container"></div>
+    <div id="sleeplog_by_date_bar" class="chart-container-hourly"></div>
+    <div id="hr_by_date" class="chart-container-hourly"></div>
+    <div id="spo2_by_date_scatter" class="chart-container-hourly"></div>
+    <div id="hrv_by_date_scatter" class="chart-container-hourly"></div>
+    <div id="spo2_by_date_bar" class="chart-container-date"></div>
+    <div id="br_by_date_scatter" class="chart-container-date"></div>
+    <div id="hrv_by_date_area" class="chart-container-date"></div>
     
     <script src="js/br_by_date.js"></script>
     <script src="js/hr_by_date.js"></script>

@@ -51,7 +51,7 @@ function loadSpo2ByDateScatterData() {
         },
         yaxis: {
           title: "",
-          range: [90, 100],
+          range: ['auto', 100],
           ticksuffix: "%",
           tickfont: { size: 10 },
         },

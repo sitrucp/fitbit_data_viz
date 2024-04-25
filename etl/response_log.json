@@ -36,58 +36,58 @@
     ],
     "get_ep_ecg_intraday_by_date": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
             "timestamp": "2024-04-25-09:05:22"
         }
     ],
     "get_ep_hr_intraday_by_date": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:43"
+            "timestamp": "2024-04-25-09:05:24"
         }
     ],
     "get_ep_br_intraday_by_interval": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:43"
+            "timestamp": "2024-04-25-09:05:25"
         }
     ],
     "get_ep_hrv_intraday_by_interval": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:44"
+            "timestamp": "2024-04-25-09:05:25"
         }
     ],
     "get_ep_sleeplog_by_interval": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:45"
+            "timestamp": "2024-04-25-09:05:26"
         }
     ],
     "get_ep_spo2_intraday_by_interval": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:46"
+            "timestamp": "2024-04-25-09:05:27"
         }
     ],
     "get_ep_tempskin_by_date": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:49"
+            "timestamp": "2024-04-25-09:05:29"
         }
     ],
     "get_ep_vo2max_intraday_by_interval": [
         {
-            "date": "2024-04-24",
+            "date": "2024-04-25",
             "status": "success",
-            "timestamp": "2024-04-24-10:31:47"
+            "timestamp": "2024-04-25-09:05:28"
         }
     ]
 }

@@ -51,7 +51,7 @@ function loadSleepLogData() {
         yaxis: {
           title: "",
           range: [0, 1],
-          showticklabels: false,
+          showticklabels: true,
         },
         shapes: shapes,
         margin: {

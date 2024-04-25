@@ -43,7 +43,7 @@ def main():
         file_date = datetime.strptime('-'.join(file_date_str), '%Y-%m-%d').date()
 
         # Process files starting one day before last response
-        if file_date >= last_response_date - timedelta(days=1):  
+        if file_date >= last_response_date - timedelta(days=1):
             with open(file, 'r') as f:
                 data = json.load(f)
                 for entry in data:

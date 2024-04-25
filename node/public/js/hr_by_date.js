@@ -7,10 +7,12 @@ function loadHRByDateData() {
   fetch(`http://localhost:3000/api/hr?start=${startDate}&end=${endDate}`)
     .then((response) => response.json())
     .then((data) => {
-      //console.log("Data received:", data); // Log the data to see what's received from the server
-      const dates = data.map((item) => new Date(item.dateTime));
-      const heartRate = data.map((item) => item.heartRate);
-      const restingHeartRates = data.map((item) => item.restingHeartRate);
+      const dates = data.map(item => new Date(item.dateTime))
+                        .filter(date => date.getHours() < 10);
+      const heartRate = data.filter(item => new Date(item.dateTime).getHours() < 10)
+                        .map(item => item.heartRate);
+      const restingHeartRates = data.filter(item => new Date(item.dateTime).getHours() < 10)
+                        .map(item => item.restingHeartRate);
 
     // Calculate colors for each heart rate based on zones
     const heartRateColors = heartRate.map(rate => {
