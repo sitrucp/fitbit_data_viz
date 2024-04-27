@@ -1,11 +1,11 @@
 function updateCharts() {
-    loadHRByDateData();
-    loadHrvByDateAreaData();
-    loadHrvByDateScatterData();
-    loadSpo2ByDateBarData();
-    loadSpo2ByDateScatterData();
     loadSleepLogData();
-    loadBrByDateScatterData();
+  loadHRByDateData();
+  loadSpo2ByDateScatterData();
+  loadHrvByDateScatterData();
+  loadSpo2ByDateBarData();
+  loadHrvByDateAreaData();  
+  loadBrByDateScatterData();
 }
 
 window.onload = () => {
@@ -16,6 +16,5 @@ window.onload = () => {
   endDate.setHours(0, 0, 0, 0);
   document.getElementById("start").valueAsDate = startDate;
   document.getElementById("end").valueAsDate = endDate;
-
   updateCharts(); // Initial update to draw all charts based on the default selection
 };

@@ -1,8 +1,21 @@
-function loadHrvByDateAreaData() {
+// Flag to indicate first load
+let isFirstLoadHRV = true;
 
-    // Get page dates
-    const startDate = document.getElementById("start").value;
-    const endDate = document.getElementById("end").value;
+function loadHrvByDateAreaData() {
+    let startDate, endDate;
+    if (isFirstLoadHRV) {
+        // Default dates for the first load
+        endDate = new Date();
+        startDate = new Date();
+        startDate.setDate(endDate.getDate() - 365); // Set start 365 days earlier than today
+        startDate = startDate.toISOString().split('T')[0];
+        endDate = endDate.toISOString().split('T')[0];
+        isFirstLoadHRV = false;
+    } else {
+        // Get dates from the input fields after the first load
+        startDate = document.getElementById("start").value;
+        endDate = document.getElementById("end").value;
+    }
     
     fetch(`http://localhost:3000/api/hrv?start=${startDate}&end=${endDate}`)
         .then(response => response.json())
@@ -62,7 +75,7 @@ function loadHrvByDateAreaData() {
                     type: 'date',
                     tickfont: { size: 10 },
                     tickformat: "%Y-%m-%d", // Ensure that only the date is displayed
-                    tickvals: Object.keys(groupedData), // Specify tick values to ensure no redundancy
+                    //tickvals: Object.keys(groupedData), // Specify tick values to ensure no redundancy
                     tickangle: -45,
                     nticks: 20
                 },

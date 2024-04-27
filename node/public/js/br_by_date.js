@@ -1,8 +1,21 @@
-function loadBrByDateScatterData() {
+// Flag to indicate first load
+let isFirstLoadBR = true;
 
-    // Get page dates
-    const startDate = document.getElementById("start").value;
-    const endDate = document.getElementById("end").value;
+function loadBrByDateScatterData() {
+    let startDate, endDate;
+    if (isFirstLoadBR) {
+        // Default dates for the first load
+        endDate = new Date();
+        startDate = new Date();
+        startDate.setDate(endDate.getDate() - 365); // Set start 365 days earlier than today
+        startDate = startDate.toISOString().split('T')[0];
+        endDate = endDate.toISOString().split('T')[0];
+        isFirstLoadBR = false;
+    } else {
+        // Get dates from the input fields after the first load
+        startDate = document.getElementById("start").value;
+        endDate = document.getElementById("end").value;
+    }
 
     fetch(`http://localhost:3000/api/br?start=${startDate}&end=${endDate}`)
         .then(response => response.json())
@@ -39,13 +52,13 @@ function loadBrByDateScatterData() {
                     type: "date",
                     tickfont: { size: 10 },
                     tickformat: "%Y-%m-%d",
-                    tickvals: dates,
+                    //tickvals: dates,
                     tickangle: -45,
                       nticks: 20
                   },
                 yaxis: {
                   title: "", // Removing title for compactness
-                  range: [0, "auto"],
+                  range: [9, 16],
                   tickfont: { size: 10 },
                 },
                 margin: {

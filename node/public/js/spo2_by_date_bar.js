@@ -1,9 +1,22 @@
-function loadSpo2ByDateBarData() {
+// Flag to indicate first load
+let isFirstLoadSpO2 = true;
 
-    // Get page dates
-    const startDate = document.getElementById("start").value;
-    const endDate = document.getElementById("end").value;
-    
+function loadSpo2ByDateBarData() {
+  let startDate, endDate;
+  if (isFirstLoadSpO2) {
+    // Default dates for the first load
+    endDate = new Date();
+    startDate = new Date();
+    startDate.setDate(endDate.getDate() - 365); // Set start 365 days earlier than today
+    startDate = startDate.toISOString().split("T")[0];
+    endDate = endDate.toISOString().split("T")[0];
+    isFirstLoadSpO2 = false;
+  } else {
+    // Get dates from the input fields after the first load
+    startDate = document.getElementById("start").value;
+    endDate = document.getElementById("end").value;
+  }
+
   fetch(`http://localhost:3000/api/spo2?start=${startDate}&end=${endDate}`)
     .then((response) => response.json())
     .then((data) => {
@@ -79,17 +92,17 @@ function loadSpo2ByDateBarData() {
 
       var layout = {
         title: {
-            text: "Spo2 By Date - Relative to 95% Goal",
-            x: 0.01, // Aligns the title to the left
-            xanchor: 'left' // Anchors the title text to the left edge of its container
+          text: "Spo2 By Date - Relative to 95% Goal",
+          x: 0.01, // Aligns the title to the left
+          xanchor: "left", // Anchors the title text to the left edge of its container
         },
         xaxis: {
           type: "date",
           tickfont: { size: 10 },
           tickformat: "%Y-%m-%d",
-          tickvals: dates,
+          //tickvals: dates,
           tickangle: -45,
-            nticks: 20
+          nticks: 20,
         },
         yaxis: {
           title: "",
