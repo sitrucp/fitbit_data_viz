@@ -92,7 +92,7 @@ function loadSpo2ByDateBarData() {
 
       var layout = {
         title: {
-          text: "Spo2 By Date - Relative to 95% Goal",
+          text: "Spo2 By Date - Relative to 95% Goal (PW2 > 2024-04-05)",
           x: 0.01, // Aligns the title to the left
           xanchor: "left", // Anchors the title text to the left edge of its container
         },

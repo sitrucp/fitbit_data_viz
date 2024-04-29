@@ -8,9 +8,7 @@
 </head>
 
 <body>
-    <p><a href="index.html">Home</a></p>
-
-    <h2>VO2 Max By Date - Line Chart</h2>
+    <h2><a href="index.html">Home</a> | VO2 Max By Date - Line Chart</h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -40,7 +38,8 @@
             fetch(`http://localhost:3000/api/vo2max?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
                 .then(data => {
-                    const dates = data.map(item => new Date(item.date));
+                    //const dates = data.map(item => new Date(item.date));
+                    const dates = data.map(item => item.date); // different from datetime bc we just want dates
                     const vo2MaxHigh = data.map(item => item.vo2MaxHigh);
                     const vo2MaxLow = data.map(item => item.vo2MaxLow);
 

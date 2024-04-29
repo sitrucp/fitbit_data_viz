@@ -9,9 +9,7 @@
 </head>
 
 <body>
-    <p><a href="index.html">Home</a></p>
-
-    <h2>Resting Heart Rate By Date - Line Chart</h2>
+    <h2><a href="index.html">Home</a> | Resting Heart Rate By Date - Line Chart</h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -42,7 +40,8 @@
             fetch(`http://localhost:3000/api/rhr?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
                 .then(data => {
-                    const dates = data.map(item => new Date(item.date));
+                    //const dates = data.map(item => new Date(item.date));
+                    const dates = data.map(item => item.date); // different from datetime bc we just want dates
                     const restingHeartRates = data.map(item => item.restingHeartRate);
 
                     var traces = [{
@@ -57,21 +56,18 @@
                     var layout = {
                         title: 'Resting Heart Rate By Date',
                         xaxis: {
-                            title: '', // Consider removing if not necessary
+                            title: '', 
                             type: 'date',
                             tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d", 
+                            tickangle: -45,
+                            //tickmode: 'array',
+                            //tickvals: dates,
                         },
                         yaxis: {
-                            title: '', // Consider removing if not necessary
+                            title: '', 
                             range: ['auto', 'auto'],
                             tickfont: { size: 10 },
-                        },
-                        margin: { // Reduce margin
-                            l: 40,
-                            r: 40,
-                            b: 40,
-                            t: 40, // Smaller top margin if the title is removed
-                            pad: 4
                         },
                         legend: {
                             x: 1,

@@ -6,8 +6,7 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-    <p><a href="index.html">Home</a></p>
-    <h2>HRV By Date - Scatter Chart</h2>
+    <h2><a href="index.html">Home</a> | HRV By Date - Scatter Chart</h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -65,8 +64,11 @@
                     var layout = {
                         title: 'HRV (RMSSD) By Date',
                         xaxis: {
-                            title: 'Date and Time',
-                            type: 'date'
+                            title: '', 
+                            type: 'date',
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d %H:%M", 
+                            tickangle: -45,
                         },
                         yaxis: {
                             title: 'RMSSD',

@@ -1,9 +1,12 @@
 .gitignore
 auth_tokens.json
+activity_log.log
+response_log.json
 json_data/
 viz_standalone/
 archive/
 .vscode/
+util_*.py
 
 .DS_Store
 .huskyrc.json

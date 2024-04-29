@@ -8,9 +8,7 @@
 </head>
 
 <body>
-    <p><a href="index.html">Home</a></p>
-
-    <h2>Spo2 By Date - Relative to 95% Bar Chart</h2>
+    <h2><a href="index.html">Home</a> | Spo2 By Date - Relative to 95% Bar Chart (PW2 > 2024-04-05)</h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -129,11 +127,11 @@
                     var layout = {
                         title: 'SpO2 Measurement Counts Relative to 95%',
                         xaxis: {
-                            title: 'Date',
+                            title: '', 
                             type: 'date',
-                            tickformat: "%Y-%m-%d",
-                            //tickvals: dates,
-                            tickangle: -45
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d", 
+                            tickangle: -45,
                         },
                         yaxis: {
                             title: 'SpO2 Relative to 95%',

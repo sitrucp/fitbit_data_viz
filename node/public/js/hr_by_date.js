@@ -8,10 +8,10 @@ function loadHRByDateData() {
     .then((response) => response.json())
     .then((data) => {
       const dates = data.map(item => new Date(item.dateTime))
-                        .filter(date => date.getHours() < 10);
-      const heartRate = data.filter(item => new Date(item.dateTime).getHours() < 10)
+                        .filter(date => date.getHours() < 9);
+      const heartRate = data.filter(item => new Date(item.dateTime).getHours() < 9)
                         .map(item => item.heartRate);
-      const restingHeartRates = data.filter(item => new Date(item.dateTime).getHours() < 10)
+      const restingHeartRates = data.filter(item => new Date(item.dateTime).getHours() < 9)
                         .map(item => item.restingHeartRate);
 
     // Calculate colors for each heart rate based on zones

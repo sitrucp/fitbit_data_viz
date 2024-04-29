@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 from pymongo import MongoClient
 from etl.response_log import get_last_response
 from etl.db_connection import get_database
-from etl.db_connection import get_database
 
 def compute_daily_average(measurements):
     """Compute the average SpO2 value from a list of measurements."""

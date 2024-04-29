@@ -8,8 +8,8 @@
 </head>
 
 <body>
-    <p><a href="index.html">Home</a></p>
-    <h2>Sleep Log By Date - Stacked Area Chart 100% - <a href="page_sleeplog_by_date_area_absolute.html">absolute chart</a></h2>
+    <h2><a href="index.html">Home</a> | Sleep Log By Date - Stacked Area Chart 100% - <a
+            href="page_sleeplog_by_date_area_absolute.html">absolute chart</a></h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -82,9 +82,10 @@
                         title: 'Sleep Log by Date - Stacked Area Chart',
                         yaxis: { title: 'Percent of Total Sleep', ticksuffix: '%' },
                         xaxis: {
-                            title: 'Date',
+                            title: '',
                             type: 'date',
-                            tickformat: "%Y-%m-%d",
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d", 
                             tickangle: -45
                         },
                     };

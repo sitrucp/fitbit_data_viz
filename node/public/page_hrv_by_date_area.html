@@ -8,8 +8,7 @@
 </head>
 
 <body>
-    <p><a href="index.html">Home</a></p>
-    <h2>HRV By Date and Ranges</h2>
+    <h2><a href="index.html">Home</a> | HRV By Date and Ranges</h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -85,13 +84,15 @@
 
                     var layout = {
                         title: 'HRV (RMSSD) By Date - Range Bins 100% Stacked',
-                        yaxis: { title: 'Percent Total', ticksuffix: '%' },
+                        yaxis: { 
+                            title: 'Percent Total', 
+                            ticksuffix: '%' 
+                        },
                         xaxis: {
-                            title: '', // Simplify or remove if not needed
+                            title: '',
                             type: 'date',
                             tickfont: { size: 10 },
-                            tickformat: "%Y-%m-%d", // Ensure that only the date is displayed
-                            //tickvals: Object.keys(groupedData), // Specify tick values to ensure no redundancy
+                            tickformat: "%Y-%m-%d %H", 
                             tickangle: -45
                         },
                     };

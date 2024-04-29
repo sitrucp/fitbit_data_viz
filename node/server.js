@@ -41,10 +41,6 @@ async function main() {
       const startDate = start ? new Date(start) : today;
       const endDate = end ? new Date(end) : todayEnd;
 
-      console.log(
-        `Fetching Breathing Rate data from ${startDate.toISOString()} to ${endDate.toISOString()}...`
-      );
-
       try {
         const collection = db.collection("br_by_date");
         const pipeline = [
@@ -67,12 +63,10 @@ async function main() {
             },
           },
         ];
-        console.log("Executing Breathing Rate aggregation pipeline...");
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `Breathing Rate data aggregation complete. Number of records fetched: ${data.length}`
+          `Breathing Rate data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
         );
-
         res.json(data);
       } catch (error) {
         console.error("Error fetching Breathing Rate data: ", error);
@@ -94,10 +88,6 @@ async function main() {
       const startDate = start ? new Date(start) : today;
       const endDate = end ? new Date(end) : todayEnd;
 
-      console.log(
-        `Fetching Heart Rate data from ${startDate.toISOString()} to ${endDate.toISOString()}...`
-      );
-
       try {
         const collection = db.collection("hr_intraday_by_date");
         const pipeline = [
@@ -114,44 +104,21 @@ async function main() {
           },
           {
             $project: {
-              dateTime: {
-                $dateFromString: {
-                  dateString: "$measurements.dateTime",
-                },
-              },
+              date: 1,
+              restingHeartRate: 1,
+              dateTime: "$measurements.dateTime",
               heartRate: "$measurements.heartRate",
-              restingHeartRate: 1,
+              _id: 0,
             },
           },
-          {
-            $group: {
-              _id: {
-                $subtract: [
-                  { $toDate: "$dateTime" },
-                  { $mod: [{ $toLong: { $toDate: "$dateTime" } }, 30000] },
-                ],
-              },
-              heartRate: { $max: "$heartRate" },
-              restingHeartRate: { $first: "$restingHeartRate" },
-            },
-          },
-          {
-            $project: {
-              dateTime: {
-                $dateToString: { format: "%Y-%m-%dT%H:%M:%S", date: "$_id" },
-              },
-              heartRate: { $round: ["$heartRate"] },
-              restingHeartRate: 1,
-            },
-          },
-          {
-            $sort: { dateTime: 1 }, // Sort by minute ascending
-          },
+// first project removed, replaced with above
+// group removed
+// second project removed
+// sort removed
         ];
-        console.log("Executing HR aggregation pipeline...");
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `HR data aggregation complete. Number of records fetched: ${data.length}`
+          `HR data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
         );
         res.json(
           data.map((item) => ({
@@ -160,6 +127,7 @@ async function main() {
             restingHeartRate: item.restingHeartRate,
           }))
         );
+        console.log(data);
       } catch (error) {
         console.error("Error fetching HR data: ", error);
         res.status(500).send("Error fetching HR data: " + error.message);
@@ -177,10 +145,6 @@ async function main() {
 
       const startDate = start ? new Date(start) : today;
       const endDate = end ? new Date(end) : todayEnd;
-
-      console.log(
-        `Fetching HRV data from ${startDate.toISOString()} to ${endDate.toISOString()}...`
-      );
 
       try {
         const collection = db.collection("hrv_intraday_by_date");
@@ -214,7 +178,7 @@ async function main() {
         ];
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `HRV data aggregation complete. Number of records fetched: ${data.length}`
+          `HRV data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
         );
         res.json(data);
       } catch (error) {
@@ -234,10 +198,6 @@ async function main() {
 
       const startDate = start ? new Date(start) : today;
       const endDate = end ? new Date(end) : todayEnd;
-
-      console.log(
-        `Fetching Sleep Log data from ${startDate.toISOString()} to ${endDate.toISOString()}...`
-      );
 
       try {
         const collection = db.collection("sleeplog_by_date");
@@ -318,10 +278,9 @@ async function main() {
             $replaceRoot: { newRoot: "$allData" },
           },
         ];
-        console.log("Executing Sleeplog aggregation pipeline...");
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `Sleeplog data aggregation complete. Number of records fetched: ${data.length}`
+          `Sleeplog data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
         );
 
         res.json(data);
@@ -342,10 +301,6 @@ async function main() {
 
       const startDate = start ? new Date(start) : today;
       const endDate = end ? new Date(end) : todayEnd;
-
-      console.log(
-        `Fetching SpO2 data from ${startDate.toISOString()} to ${endDate.toISOString()}...`
-      );
 
       try {
         const collection = db.collection("spo2_intraday_by_date");
@@ -371,10 +326,9 @@ async function main() {
             },
           },
         ];
-        console.log("Executing SpO2 aggregation pipeline...");
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `SpO2 data aggregation complete. Number of records fetched: ${data.length}`
+          `SpO2 data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
         );
         res.json(data);
       } catch (error) {
@@ -430,8 +384,10 @@ async function main() {
             $sort: { "_id.date": 1, "_id.hour": 1 },
           },
         ];
-
         const data = await collection.aggregate(pipeline).toArray();
+        console.log(
+            `Steps data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
+          );
         res.json(calculateCumulativeSteps(data));
       } catch (error) {
         console.error("Error fetching Steps data: ", error);
@@ -502,10 +458,6 @@ async function main() {
       const startDate = start ? new Date(start) : today;
       const endDate = end ? new Date(end) : todayEnd;
 
-      console.log(
-        `Fetching Resting Heart Rate data from ${startDate.toISOString()} to ${endDate.toISOString()}...`
-      );
-
       try {
         const collection = db.collection("hr_intraday_by_date");
         const pipeline = [
@@ -525,11 +477,9 @@ async function main() {
             },
           },
         ];
-        console.log("Executing RHR aggregation pipeline...");
         const data = await collection.aggregate(pipeline).toArray();
-        console.log(data);
         console.log(
-          `RHR data aggregation complete. Number of records fetched: ${data.length}`
+          `RHR data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
         );
         res.json(
           data.map((item) => ({
@@ -555,10 +505,6 @@ async function main() {
       const startDate = start ? new Date(start) : today;
       const endDate = end ? new Date(end) : todayEnd;
 
-      console.log(
-        `Fetching VO2 Max data from ${startDate.toISOString()} to ${endDate.toISOString()}...`
-      );
-
       try {
         const collection = db.collection("vo2max_by_date");
         const pipeline = [
@@ -579,12 +525,10 @@ async function main() {
             },
           },
         ];
-        console.log("Executing VO2 Max aggregation pipeline...");
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `VO2 Max data aggregation complete. Number of records fetched: ${data.length}`
+          `VO2 Max data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
         );
-
         res.json(data);
       } catch (error) {
         console.error("Error fetching VO2 Max data: ", error);

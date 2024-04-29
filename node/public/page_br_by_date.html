@@ -8,9 +8,7 @@
 </head>
 
 <body>
-    <p><a href="index.html">Home</a></p>
-
-    <h2>Breathing Rate By Date - Line Chart</h2>
+    <h2><a href="index.html">Home</a> | Breathing Rate By Date - Line Chart</h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -25,8 +23,8 @@
             // Set default dates
             let endDate = new Date();
             let startDate = new Date();
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(0, 0, 0, 0);
+            //startDate.setHours(0, 0, 0, 0);
+            //endDate.setHours(0, 0, 0, 0);
             startDate.setDate(endDate.getDate() - 120); // set start x days earlier than today
             document.getElementById('start').valueAsDate = startDate;
             document.getElementById('end').valueAsDate = endDate;
@@ -40,12 +38,15 @@
             fetch(`http://localhost:3000/api/br?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
                 .then(data => {
-                    const dates = data.map(item => new Date(item.date));
+                    //const dates = data.map(item => new Date(item.date));
+                    const dates = data.map(item => item.date); // different from datetime bc we just want dates
                     const fullSleepBr = data.map(item => item.fullSleepBr);
                     const deepSleepBr = data.map(item => item.deepSleepBr);
                     const lightSleepBr = data.map(item => item.lightSleepBr);
                     const remSleepBr = data.map(item => item.remSleepBr);
 
+console.log(dates);
+                    
                     var traces = [{
                         x: dates,
                         y: fullSleepBr,
@@ -60,10 +61,11 @@
                     var layout = {
                         title: 'Breathing Rate By Date',
                         xaxis: {
-                            title: 'Date',
+                            title: '', 
                             type: 'date',
-                            tickformat: "%Y-%m-%d",
-                            tickangle: -45
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d", 
+                            tickangle: -45,
                         },
                         yaxis: {
                             title: 'Breathing Rate',
