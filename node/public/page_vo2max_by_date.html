@@ -74,7 +74,9 @@
                         },
                         yaxis: {
                             title: 'VO2 Max',
-                            range: ['auto',]
+                            range: [30, 'auto'],
+                            tick0: 30,  // This sets the starting tick at x
+                            dtick: 1,  // This sets the ticks to appear every x units
                         },
                     };
 

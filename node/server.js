@@ -50,6 +50,10 @@ async function main() {
                 $gte: startDate.toISOString().substring(0, 10),
                 $lte: endDate.toISOString().substring(0, 10),
               },
+              fullSleepBr: { $gt: 5, $lt: 20 },
+              remSleepBr: { $gt: 5, $lt: 20 },
+              deepSleepBr: { $gt: 5, $lt: 20 },
+              lightSleepBr: { $gt: 5, $lt: 20 },
             },
           },
           {
@@ -65,7 +69,9 @@ async function main() {
         ];
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `Breathing Rate data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
+          `Breathing Rate data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
         );
         res.json(data);
       } catch (error) {
@@ -111,14 +117,12 @@ async function main() {
               _id: 0,
             },
           },
-// first project removed, replaced with above
-// group removed
-// second project removed
-// sort removed
         ];
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `HR data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
+          `HR data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
         );
         res.json(
           data.map((item) => ({
@@ -127,7 +131,7 @@ async function main() {
             restingHeartRate: item.restingHeartRate,
           }))
         );
-        console.log(data);
+        
       } catch (error) {
         console.error("Error fetching HR data: ", error);
         res.status(500).send("Error fetching HR data: " + error.message);
@@ -178,7 +182,9 @@ async function main() {
         ];
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `HRV data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
+          `HRV data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
         );
         res.json(data);
       } catch (error) {
@@ -280,7 +286,9 @@ async function main() {
         ];
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `Sleeplog data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
+          `Sleeplog data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
         );
 
         res.json(data);
@@ -290,52 +298,100 @@ async function main() {
       }
     });
 
-    /////////// SpO2
+    /////////// SpO2 by measurement datetime
     app.get("/api/spo2", async (req, res) => {
-      let { start, end } = req.query;
-      // Set defaults to today's date if not provided
-      let today = new Date();
-      today.setHours(0, 0, 0, 0); // Start of today
-      let todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999); // End of today
-
-      const startDate = start ? new Date(start) : today;
-      const endDate = end ? new Date(end) : todayEnd;
-
-      try {
-        const collection = db.collection("spo2_intraday_by_date");
-        const pipeline = [
-          {
-            $match: {
-              date: {
-                $gte: startDate.toISOString().substring(0, 10),
-                $lte: endDate.toISOString().substring(0, 10),
+        let { start, end } = req.query;
+        // Set defaults to today's date if not provided
+        let today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+        let todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999); // End of today
+  
+        const startDate = start ? new Date(start) : today;
+        const endDate = end ? new Date(end) : todayEnd;
+  
+        try {
+          const collection = db.collection("spo2_intraday_by_date");
+          const pipeline = [
+            {
+              $match: {
+                date: {
+                  $gte: startDate.toISOString().substring(0, 10),
+                  $lte: endDate.toISOString().substring(0, 10),
+                },
               },
             },
-          },
-          {
-            $unwind: "$measurements",
-          },
-          {
-            $project: {
-              date: 1,
-              dailyAverage: 1,
-              dateTime: "$measurements.dateTime",
-              spo2: "$measurements.spo2",
-              _id: 0,
+            {
+              $unwind: "$measurements",
             },
-          },
-        ];
-        const data = await collection.aggregate(pipeline).toArray();
-        console.log(
-          `SpO2 data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
-        );
-        res.json(data);
-      } catch (error) {
-        console.error("Error fetching SpO2 data: ", error);
-        res.status(500).send("Error fetching SpO2 data: " + error.message);
-      }
-    });
+            {
+              $project: {
+                date: 1,
+                dailyAvg: 1,
+                dateTime: "$measurements.dateTime",
+                spo2: "$measurements.spo2",
+                _id: 0,
+              },
+            },
+          ];
+          const data = await collection.aggregate(pipeline).toArray();
+          console.log(
+            `SpO2 data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+              data.length
+            }`
+          );
+          res.json(data);
+        } catch (error) {
+          console.error("Error fetching SpO2 data: ", error);
+          res.status(500).send("Error fetching SpO2 data: " + error.message);
+        }
+      });
+
+         /////////// SpO2 by document date
+    app.get("/api/spo2_daily", async (req, res) => {
+        let { start, end } = req.query;
+        // Set defaults to today's date if not provided
+        let today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+        let todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999); // End of today
+  
+        const startDate = start ? new Date(start) : today;
+        const endDate = end ? new Date(end) : todayEnd;
+  
+        try {
+          const collection = db.collection("spo2_intraday_by_date");
+          const pipeline = [
+            {
+              $match: {
+                date: {
+                  $gte: startDate.toISOString().substring(0, 10),
+                  $lte: endDate.toISOString().substring(0, 10),
+                },
+              },
+            },
+            {
+              $project: {
+                date: 1,
+                dailyAvg: 1,
+                dailyMax: 1,
+                dailyMin: 1,
+                _id: 0,
+              },
+            },
+          ];
+          const data = await collection.aggregate(pipeline).toArray();
+          console.log(
+            `SpO2 daily data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+              data.length
+            }`
+          );
+          res.json(data);
+        } catch (error) {
+          console.error("Error fetching SpO2 daily data: ", error);
+          res.status(500).send("Error fetching SpO2 daily data: " + error.message);
+        }
+      });
 
     /////////// Steps
     app.get("/api/steps", async (req, res) => {
@@ -386,8 +442,10 @@ async function main() {
         ];
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-            `Steps data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
-          );
+          `Steps data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
+        );
         res.json(calculateCumulativeSteps(data));
       } catch (error) {
         console.error("Error fetching Steps data: ", error);
@@ -396,55 +454,58 @@ async function main() {
     });
 
     function calculateCumulativeSteps(data) {
-        let cumulative = 0;
-        let currentDate = "";
-        let results = [];
-      
-        data.forEach((item, index) => {
-          // Parse the date to ensure it's handled correctly
-          const dateStr = item._id.date; // This should already be in the format "YYYY-MM-DD"
-          if (currentDate !== dateStr) {
-            if (currentDate !== "") {
-              // Insert a null entry at the end of the previous day
-              results.push({
-                dateTime: `${currentDate} 23:59:00`,
-                steps: null,
-                totalSteps: null,
-                cumulativeSteps: null,
-                cumulativeStepsPct: null
-              });
-            }
-            currentDate = dateStr;
-            cumulative = 0; // Reset cumulative total for a new date
-          }
-      
-          cumulative += item.steps;
-      
-          // Calculate cumulative steps percentage
-          const cumulativeStepsPct = (item.totalSteps > 0) ? Math.ceil((cumulative / item.totalSteps) * 100) : 0;
-      
-          results.push({
-            dateTime: `${dateStr} ${item._id.hour}:00:00`, // Ensure the hour is correctly displayed
-            steps: item.steps,
-            totalSteps: item.totalSteps,
-            cumulativeSteps: cumulative,
-            cumulativeStepsPct: cumulativeStepsPct
-          });
-      
-          // Handle the last item to add a null at the end of the last date
-          if (index === data.length - 1) {
+      let cumulative = 0;
+      let currentDate = "";
+      let results = [];
+
+      data.forEach((item, index) => {
+        // Parse the date to ensure it's handled correctly
+        const dateStr = item._id.date; // This should already be in the format "YYYY-MM-DD"
+        if (currentDate !== dateStr) {
+          if (currentDate !== "") {
+            // Insert a null entry at the end of the previous day
             results.push({
-              dateTime: `${dateStr} 23:59:00`,
+              dateTime: `${currentDate} 23:59:00`,
               steps: null,
               totalSteps: null,
               cumulativeSteps: null,
-              cumulativeStepsPct: null
+              cumulativeStepsPct: null,
             });
           }
+          currentDate = dateStr;
+          cumulative = 0; // Reset cumulative total for a new date
+        }
+
+        cumulative += item.steps;
+
+        // Calculate cumulative steps percentage
+        const cumulativeStepsPct =
+          item.totalSteps > 0
+            ? Math.ceil((cumulative / item.totalSteps) * 100)
+            : 0;
+
+        results.push({
+          dateTime: `${dateStr} ${item._id.hour}:00:00`, // Ensure the hour is correctly displayed
+          steps: item.steps,
+          totalSteps: item.totalSteps,
+          cumulativeSteps: cumulative,
+          cumulativeStepsPct: cumulativeStepsPct,
         });
-      
-        return results;
-      }
+
+        // Handle the last item to add a null at the end of the last date
+        if (index === data.length - 1) {
+          results.push({
+            dateTime: `${dateStr} 23:59:00`,
+            steps: null,
+            totalSteps: null,
+            cumulativeSteps: null,
+            cumulativeStepsPct: null,
+          });
+        }
+      });
+
+      return results;
+    }
 
     /////////// RHR - Resting Heart Rate
     app.get("/api/rhr", async (req, res) => {
@@ -473,18 +534,26 @@ async function main() {
             $project: {
               date: 1,
               restingHeartRate: 1,
+              dailyAverage: 1,
+              dailyMax: 1,
+              dailyMin: 1,  
               _id: 0,
             },
           },
         ];
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `RHR data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
+          `RHR data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
         );
         res.json(
           data.map((item) => ({
             date: item.date,
             restingHeartRate: item.restingHeartRate,
+            dailyAverage: item.dailyAverage,
+            dailyMax: item.dailyMax,
+            dailyMin: item.dailyMin,
           }))
         );
       } catch (error) {
@@ -527,7 +596,9 @@ async function main() {
         ];
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `VO2 Max data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${data.length}`
+          `VO2 Max data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
         );
         res.json(data);
       } catch (error) {

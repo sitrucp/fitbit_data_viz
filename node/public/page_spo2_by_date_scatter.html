@@ -15,7 +15,7 @@
     <label for="end">End Date:</label>
     <input type="date" id="end">
     <button onclick="loadData()">Load Data</button>
-    
+
     <div id="spo2_by_date_scatter" style="width:100%;height:600px;"></div>
 
     <script>
@@ -39,41 +39,57 @@
                 .then(data => {
                     const dates = data.map(item => new Date(item.dateTime));
                     const spo2 = data.map(item => item.spo2);
-                    const daily_averages = data.map(item => item.dailyAverage);
+                    const daily_averages = data.map(item => item.dailyAvg);
 
-                    var traces = [{
-                        x: dates,
-                        y: spo2,
-                        mode: 'markers',
-                        type: 'scatter',
-                        name: 'SpO2',
-                        marker: {   
-                            color: 'black',
-                            size: 5 
-                        }
-                    }, {
-                        x: dates,
-                        y: daily_averages,
-                        mode: 'lines',
-                        type: 'scatter',
-                        name: 'Daily Average',
-                        line: {
-                            color: 'rgba(255, 99, 132, 1)', // pink
-                        }
-                    }];
+                    var traces = [
+                        {
+                            x: dates,
+                            y: spo2,
+                            mode: 'markers',
+                            type: 'scatter',
+                            name: 'SpO2',
+                            marker: {
+                                color: 'black',
+                                size: 5
+                            }
+                        },
+                        {
+                            x: dates,
+                            y: daily_averages,
+                            mode: 'lines',
+                            type: 'scatter',
+                            name: 'Daily Average',
+                            line: {
+                                color: "rgba(255, 99, 132, 1)", // pink
+                                dash: "dash",
+                            },
+                        },
+                        {
+                            x: [null], // No actual data points
+                            y: [null],
+                            mode: "lines",
+                            type: "scatter",
+                            name: "SpO2 95% Goal",
+                            line: {
+                                color: 'rgba(255, 99, 132, 1)', // pink
+                                dash: 'dashdot',
+                            },
+                            showlegend: true,
+                        },
+                    ];
 
                     var layout = {
                         title: 'SpO2 By Date',
                         xaxis: {
-                            title: '', 
+                            title: '',
                             type: 'date',
                             tickfont: { size: 10 },
-                            tickformat: "%Y-%m-%d %H:%M", 
+                            tickformat: "%Y-%m-%d %H:%M",
                             tickangle: -45,
                         },
                         yaxis: {
                             title: '',
-                            range: ['auto','auto']
+                            range: ['auto', 'auto']
                         },
                         legend: {
                             x: 1,
@@ -83,18 +99,18 @@
                         autosize: true,
                         shapes: [
                             {
-                                type: 'line',
+                                name: "SpO2 95% Goal",
+                                type: "line",
                                 x0: dates[0],
                                 x1: dates[dates.length - 1],
                                 y0: 95,
                                 y1: 95,
                                 line: {
-                                    color: 'red',
-                                    width: 2,
-                                    dash: 'dash'
-                                }
-                            }
-                        ]
+                                    color: 'rgba(255, 99, 132, 1)', // pink
+                                    dash: 'dashdot',
+                                },
+                            },
+                        ],
                     };
 
                     Plotly.newPlot('spo2_by_date_scatter', traces, layout);

@@ -26,7 +26,10 @@ function loadHrvByDateScatterData() {
           mode: "lines",
           type: "scatter",
           name: "Daily Average",
-          line: { color: "#FF00FF", dash: "dash" },
+          line: {
+            color: 'rgba(255, 99, 132, 1)', // pink
+            dash: 'dash',
+            }
         },
       ];
 

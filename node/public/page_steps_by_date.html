@@ -25,7 +25,7 @@
             let startDate = new Date();
             startDate.setHours(0, 0, 0, 0);
             endDate.setHours(0, 0, 0, 0);
-            startDate.setDate(endDate.getDate() - 120); // set start x days earlier than today
+            startDate.setDate(endDate.getDate() - 30); // set start x days earlier than today
             document.getElementById('start').valueAsDate = startDate;
             document.getElementById('end').valueAsDate = endDate;
             loadData();  // Initial update to draw all charts based on the default selection
@@ -34,42 +34,54 @@
         function loadData() {
             const startDate = document.getElementById('start').value;
             const endDate = document.getElementById('end').value;
-            
+
             // Fetch data from your API
             fetch(`http://localhost:3000/api/steps?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
                 .then(data => {
                     const dates = data.map(item => new Date(item.dateTime));
-                    const steps = data.map(item => item.steps === 0 ? null : item.steps); 
-                    const cumulativeSteps = data.map(item => item.cumulativeSteps === 0 ? null : item.cumulativeSteps); 
+                    const steps = data.map(item => item.steps === 0 ? null : item.steps);
+                    const cumulativeSteps = data.map(item => item.cumulativeSteps === 0 ? null : item.cumulativeSteps);
 
                     // Prepare traces for the Plotly chart
-                    const traceSteps = {
-                        x: dates,
-                        y: steps,
-                        type: 'bar',
-                        name: 'Hourly Steps',
-                        marker: {
-                            color: '#008080'  // Teal for steps
+                    const traces = [
+                        {
+                            x: dates,
+                            y: steps,
+                            type: 'bar',
+                            name: 'Hourly Steps',
+                            marker: {
+                                color: 'rgba(51, 51, 51, 1)'  // Teal for steps #008080
+                            },
+                            width: 3600000 * 0.9 // 90% of an hour in milliseconds
                         },
-                        width: 3600000 * 0.9 // 90% of an hour in milliseconds
-                    };
-
-                    const traceCumulativeSteps = {
-                        x: dates,
-                        y: cumulativeSteps,
-                        type: 'scatter',
-                        mode: 'lines',
-                        name: 'Cumulative Steps',
-                        line: {
-                            color: '#FCBF49'  // Orange for cumulative steps
-                        }
-                    };
-
+                        {
+                            x: dates,
+                            y: cumulativeSteps,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: 'Cumulative Steps',
+                            line: {
+                                color: 'rgba(169, 169, 169, 1)'  // Orange for cumulative steps #FCBF49
+                            }
+                        },
+                        {
+                            x: [null], // No actual data points
+                            y: [null],
+                            mode: "lines",
+                            type: "scatter",
+                            name: "10k Daily Goal",
+                            line: {
+                                color: 'rgba(255, 99, 132, 1)', // pink
+                                dash: 'dashdot',
+                            },
+                            showlegend: true,
+                        },
+                    ];
                     const layout = {
                         title: 'Steps By Date',
                         xaxis: {
-                            title: 'Date',
+                            title: '',
                             type: 'date',
                             tickformat: '%Y-%m-%d %H',
                             tickangle: -45,
@@ -99,7 +111,7 @@
                         ]
                     };
 
-                    Plotly.newPlot('steps_by_date_bar', [traceSteps, traceCumulativeSteps,], layout);
+                    Plotly.newPlot('steps_by_date_bar', traces, layout);
                 })
                 .catch(error => console.error('Error loading data:', error));
         }

@@ -57,8 +57,9 @@
                         type: 'scatter',
                         name: 'Daily Average',
                         line: {
-                            color: 'rgba(255, 99, 132, 1)', // pink
-                        }
+                            color: "rgba(255, 99, 132, 1)", // pink
+                            dash: "dash",
+                        },
                     }];
 
                     var layout = {
@@ -72,7 +73,10 @@
                         },
                         yaxis: {
                             title: 'RMSSD',
-                            range: ['auto', 'auto'],
+                            range: [10, 'auto'],
+                            tick0: 10,  // This sets the starting tick at x
+                            dtick: 5,  // This sets the ticks to appear every x units
+                            tickfont: { size: 10 },
                         }
                     };
 

@@ -9,13 +9,18 @@ from pymongo import MongoClient
 from etl.response_log import get_last_response
 from etl.db_connection import get_database
 
-def compute_daily_average(measurements):
+def compute_daily_aggregates(measurements):
     """Compute the average SpO2 value from a list of measurements."""
     if not measurements:
-        return None  # Handle the case of empty measurements
-    total_spo2 = sum(m['value'] for m in measurements if 'value' in m)
-    average_spo2 = total_spo2 / len(measurements)
-    return round(average_spo2, 1)  # Round to one decimal place for readability
+        return None, None, None
+    
+    values = [m['value'] for m in measurements if 'value' in m]
+    total_spo2 = sum(values)
+    daily_average = round(total_spo2 / len(values), 1)
+    daily_max = max(values)
+    daily_min = min(values)
+
+    return daily_average, daily_max, daily_min
 
 def main():
     # Define module
@@ -46,12 +51,14 @@ def main():
             with open(file, 'r') as f:
                 data = json.load(f)
                 for entry in data:
-                    # Calculate the average SpO2
-                    dailyAverage = compute_daily_average(entry['minutes'])
+                    # Calculate the average, max, min SpO2
+                    dailyAggregate = compute_daily_aggregates(entry['minutes'])
                     # Renaming and restructuring the document according to new requirements
                     new_document = {
                         'date': entry['dateTime'],
-                        'dailyAverage': dailyAverage,
+                        'dailyAvg': dailyAggregate[0],
+                        'dailyMax': dailyAggregate[1],
+                        'dailyMin': dailyAggregate[2],
                         'measurements': [{'dateTime': m['minute'], 'spo2': m['value']} for m in entry['minutes']],
                         'lastModified': datetime.now().isoformat()
                     }

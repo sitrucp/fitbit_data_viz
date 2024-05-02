@@ -1,26 +1,28 @@
 function loadHRByDateData() {
+  // Get page dates
+  const startDate = document.getElementById("start").value;
+  const endDate = document.getElementById("end").value;
 
-    // Get page dates
-    const startDate = document.getElementById("start").value;
-    const endDate = document.getElementById("end").value;
-    
   fetch(`http://localhost:3000/api/hr?start=${startDate}&end=${endDate}`)
     .then((response) => response.json())
     .then((data) => {
-      const dates = data.map(item => new Date(item.dateTime))
-                        .filter(date => date.getHours() < 9);
-      const heartRate = data.filter(item => new Date(item.dateTime).getHours() < 9)
-                        .map(item => item.heartRate);
-      const restingHeartRates = data.filter(item => new Date(item.dateTime).getHours() < 9)
-                        .map(item => item.restingHeartRate);
+      const dates = data
+        .map((item) => new Date(item.dateTime))
+        .filter((date) => date.getHours() < 9);
+      const heartRate = data
+        .filter((item) => new Date(item.dateTime).getHours() < 9)
+        .map((item) => item.heartRate);
+      const restingHeartRates = data
+        .filter((item) => new Date(item.dateTime).getHours() < 9)
+        .map((item) => item.restingHeartRate);
 
-    // Calculate colors for each heart rate based on zones
-    const heartRateColors = heartRate.map(rate => {
-        if (rate < 97) return 'rgb(0, 128, 128)';      // Normal
-        else if (rate < 120) return 'rgb(252, 191, 73)'; // Fat Burn
-        else if (rate < 148) return 'rgb(247, 127, 0)';   // Cardio
-        else return 'rgb(214, 40, 40)';                 // Peak
-        });
+      // Calculate colors for each heart rate based on zones
+      const heartRateColors = heartRate.map((rate) => {
+        if (rate < 97) return "rgb(0, 128, 128)"; // Normal
+        else if (rate < 120) return "rgb(252, 191, 73)"; // Fat Burn
+        else if (rate < 148) return "rgb(247, 127, 0)"; // Cardio
+        else return "rgb(214, 40, 40)"; // Peak
+      });
 
       var trace1 = {
         x: dates,
@@ -37,14 +39,17 @@ function loadHRByDateData() {
         mode: "lines",
         type: "scatter",
         name: "Resting Heart Rate",
-        line: { color: "#FF00FF", dash: "dash" },
+        line: {
+          color: "rgba(255, 99, 132, 1)", // pink
+          dash: "dash",
+        },
       };
 
       var layout = {
         title: {
-            text: "Heart Rate By Date",
-            x: 0.01, // Aligns the title to the left
-            xanchor: 'left' // Anchors the title text to the left edge of its container
+          text: "Heart Rate By Date",
+          x: 0.01, // Aligns the title to the left
+          xanchor: "left", // Anchors the title text to the left edge of its container
         },
         xaxis: {
           title: "", // Consider removing if not necessary

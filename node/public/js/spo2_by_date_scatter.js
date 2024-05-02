@@ -9,7 +9,7 @@ function loadSpo2ByDateScatterData() {
     .then((data) => {
       const dates = data.map((item) => new Date(item.dateTime));
       const spo2 = data.map((item) => item.spo2);
-      const dailyAverages = data.map((item) => item.dailyAverage);
+      const dailyAvg = data.map((item) => item.dailyAvg);
 
       var traces = [
         {
@@ -21,12 +21,15 @@ function loadSpo2ByDateScatterData() {
           marker: { color: "black", size: 3 },
         },
         {
-          x: dates,
-          y: dailyAverages,
-          mode: "lines",
-          type: "scatter",
-          name: "SpO2 Daily Average",
-          line: { color: "#FF00FF", dash: "dash" },
+            x: dates,
+            y: dailyAvg,
+            mode: 'lines',
+            type: 'scatter',
+            name: 'Daily Average',
+            line: {
+                color: "rgba(255, 99, 132, 1)", // pink
+                dash: "dash",
+            },
         },
         {
           x: [null], // No actual data points
@@ -34,7 +37,10 @@ function loadSpo2ByDateScatterData() {
           mode: "lines",
           type: "scatter",
           name: "SpO2 95% Goal",
-          line: { color: "blue", width: 2, dash: "dash" },
+          line: {
+            color: 'rgba(255, 99, 132, 1)', // pink
+            dash: 'dashdot',
+            },
           showlegend: true,
         },
       ];
@@ -63,7 +69,10 @@ function loadSpo2ByDateScatterData() {
             x1: dates[dates.length - 1],
             y0: 95,
             y1: 95,
-            line: { color: "blue", width: 2, dash: "dash" },
+            line: {
+                color: 'rgba(255, 99, 132, 1)', // pink
+                dash: 'dashdot',
+                },
           },
         ],
         margin: {

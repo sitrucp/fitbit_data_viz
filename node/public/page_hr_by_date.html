@@ -72,10 +72,13 @@
                     var trace2 = {
                         x: dates,
                         y: restingHeartRates,
-                        mode: 'lines',
-                        type: 'scatter',
-                        name: 'Resting Heart Rate',
-                        marker: { color: 'rgba(255, 99, 132, 1)', size: 3 }, // pink
+                        mode: "lines",
+                        type: "scatter",
+                        name: "Resting Heart Rate",
+                        line: {
+                            color: "rgba(255, 99, 132, 1)", // pink
+                            dash: "dash",
+                        },
                     };
 
                     var layout = {

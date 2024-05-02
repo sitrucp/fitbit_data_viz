@@ -25,7 +25,7 @@
             let startDate = new Date();
             //startDate.setHours(0, 0, 0, 0);
             //endDate.setHours(0, 0, 0, 0);
-            startDate.setDate(endDate.getDate() - 120); // set start x days earlier than today
+            startDate.setDate(endDate.getDate() - 365); // set start x days earlier than today
             document.getElementById('start').valueAsDate = startDate;
             document.getElementById('end').valueAsDate = endDate;
             loadData();  // Initial update to draw all charts based on the default selection
@@ -45,8 +45,6 @@
                     const lightSleepBr = data.map(item => item.lightSleepBr);
                     const remSleepBr = data.map(item => item.remSleepBr);
 
-console.log(dates);
-                    
                     var traces = [{
                         x: dates,
                         y: fullSleepBr,

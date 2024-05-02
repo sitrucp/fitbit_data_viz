@@ -9,12 +9,16 @@ from pymongo import MongoClient
 from etl.response_log import get_last_response
 from etl.db_connection import get_database
 
-def compute_daily_average(measurements):
+def compute_daily_aggregates(measurements):
+    """Compute the average, max, and min heart rate from a list of measurements."""
     if not measurements:
-        return None
-    total = sum(measurement['heartRate'] for measurement in measurements)
-    average = total / len(measurements)
-    return round(average, 1)
+        return None, None, None
+    values = [m['heartRate'] for m in measurements]
+    total = sum(values)
+    daily_average = round(total / len(values), 1)
+    daily_max = max(values)
+    daily_min = min(values)
+    return daily_average, daily_max, daily_min
 
 def main():
     module_name_str = "get_ep_hr_intraday_by_date"
@@ -52,14 +56,16 @@ def main():
                         datetime_plus_time_str = datetime_plus_time.strftime('%Y-%m-%dT%H:%M:%S')
                         measurements.append({'dateTime': datetime_plus_time_str, 'heartRate': entry['value']})
                     
-                    daily_average = compute_daily_average(measurements)
+                    daily_average, daily_max, daily_min = compute_daily_aggregates(measurements)
 
                     new_document = {
                         'date': date,
                         'restingHeartRate': restingHeartRate,
                         'dailyAverage': daily_average,
+                        'dailyMax': daily_max,
+                        'dailyMin': daily_min,
                         'measurements': measurements,
-                        'lastModified': datetime.now()
+                        'lastModified': datetime.now().isoformat()
                     }
 
                     filter_criteria = {'date': data['activities-heart'][0]['dateTime']}
