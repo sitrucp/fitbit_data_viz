@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path"); // Add this line
 // Import child_process to run python code
 const { exec } = require("child_process");
 const { MongoClient } = require("mongodb");
@@ -7,6 +8,9 @@ const port = 3000;
 
 // Serve static files from the 'public' directory
 app.use(express.static("public"));
+
+// Serve HTML files from the 'public/html' directory
+app.use(express.static(path.join(__dirname, "public/html")));
 
 // MongoDB Connection URL
 const url = "mongodb://localhost:27017";
