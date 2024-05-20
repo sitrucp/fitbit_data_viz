@@ -19,9 +19,9 @@ def get_data(start_date, end_date):
     get_response.make_request(start_date, end_date, url, module_str, endpoint_type, max_days=None)
 
 def main():
-    # Set start_date and end_date parameters
-    start_date = date(2023, 7, 5)
-    end_date = date(2023, 12, 31)
+    # Set start_date and end_date parameters 2020_04_04
+    start_date = date(2020, 4, 4)
+    end_date = date(2020, 12, 31)
 
     # Call the function with the parameters
     get_data(start_date, end_date)

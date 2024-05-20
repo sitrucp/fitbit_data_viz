@@ -9,19 +9,46 @@
 </head>
 
 <body>
-    <h2>Home | <a href="index_life.html">Life Summary</a> | <a href="index_sleep.html">Sleep Summary</a></h2>
+    <h2>Home | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a></h2>
+    <button onclick="runPython()">Run Python Script</button>
+    <pre id="output"></pre> <!-- Display output here -->
+    <script>
+        function runPython() {
+            const outputElement = document.getElementById('output');
+            fetch('/run-python').then(response => {
+                const reader = response.body.getReader();
+                function read() {
+                    return reader.read().then(({ done, value }) => {
+                        if (done) {
+                            console.log('Stream completed');
+                            return;
+                        }
+                        const string = new TextDecoder().decode(value);
+                        outputElement.textContent += string;
+                        read(); // Read the next chunk of data
+                    });
+                }
+                read();
+            }).catch(error => console.error('Error:', error));
+        }
+    </script>
     <ul>
-        <li><a href="page_hr_by_date.html">Heart Rate By Date - Scatter Chart</a></li>
+        <li><a href="page_hr_by_date_scatter.html">Heart Rate By Date - Scatter Chart</a></li>
+        <li><a href="page_hr_by_date_ranges.html">Heart Rate Ranges By Date - Bar Chart</a></li>
         <li><a href="page_rhr_by_date_line.html">Resting Heart Rate By Date - Line Chart</a></li>
         <li><a href="page_spo2_by_date_scatter.html">SpO2 By Date - Scatter Chart</a></li>
-        <li><a href="page_spo2_by_date_line.html">SpO2 By Date - Average Line Chart</a></li>
+        <li><a href="page_spo2_by_date_line.html">SpO2 By Date - Line Chart</a></li>
         <li><a href="page_spo2_by_date_bar.html">SpO2 By Date Relative to 95% - Bar Chart</a></li>
         <li><a href="page_br_by_date.html">Breathing Rate By Date - Line Chart</a></li>
         <li><a href="page_hrv_by_date_scatter.html">HRV By Date - Scatter Chart</a></li>
-        <li><a href="page_hrv_by_date_area.html">HRV By Date and Range - Area Chart</a></li>
-        <li><a href="page_sleeplog_by_date_bar.html">Sleeplog By Date - Bar Chart</a></li>
-        <li><a href="page_sleeplog_by_date_area.html">Sleeplog By Date - Area Chart</a></li>
-        <li><a href="page_steps_by_date.html">Steps By Date - Bar Chart</a></li>
+        <li><a href="page_hrv_by_date_line.html">HRV By Date - Line Chart</a></li>
+        <li><a href="page_hrv_by_date_ranges.html">HRV Ranges By Date - Bar Chart</a></li>
+        <li><a href="page_sleeplog_by_date_bar.html">Sleeplog Detail By Date - Bar Chart</a></li>
+        <li><a href="page_sleeplog_by_date_ranges_100pct.html">Sleeplog Ranges By Date - 100 % Bar Chart</a></li>
+        <li><a href="page_sleeplog_by_date_ranges_abs.html">Sleeplog Ranges By Date - Absolute Bar Chart</a></li>
+        <li><a href="page_steps_by_date_today.html">Steps By Date - Today Bar Chart</a></li>
+        <li><a href="page_steps_by_date_hourly.html">Steps By Date - Hourly Bar Chart</a></li>
+        <li><a href="page_steps_by_date_daily.html">Steps By Date - Daily Bar Chart</a></li>
         <li><a href="page_vo2max_by_date.html">VO2 Max By Date - Line Chart</a></li>
     </ul>
 

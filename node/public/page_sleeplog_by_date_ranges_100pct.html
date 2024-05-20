@@ -3,13 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Sleep Log By Date - Stacked Area Chart</title>
+    <title>Sleeplog Ranges By Date - 100 % Bar Chart</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <body>
-    <h2><a href="index.html">Home</a> | Sleep Log By Date - Stacked Area Chart 100% - <a
-            href="page_sleeplog_by_date_area_absolute.html">absolute chart</a></h2>
+    <h2><a href="index.html">Home</a> | Sleeplog Ranges By Date - 100 % Bar Chart - <a
+            href="page_sleeplog_by_date_ranges_abs.html">Absolute Chart</a></h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -25,7 +25,7 @@
             let startDate = new Date();
             startDate.setHours(0, 0, 0, 0);
             endDate.setHours(0, 0, 0, 0);
-            startDate.setDate(endDate.getDate() - 365); // set start x days earlier than today
+            startDate.setDate(endDate.getDate() - 4400); // set start x days earlier than today
             document.getElementById('start').valueAsDate = startDate;
             document.getElementById('end').valueAsDate = endDate;
             loadData();
@@ -41,7 +41,10 @@
                     const groupedData = {};
                     data.forEach(item => {
                         const date = (new Date(item.segment_start_time)).toISOString().split('T')[0];
-                        const level = item.level;
+                        let level = item.level;
+                        if (level === 'wake') { // Standardize 'wake' to 'awake'
+                            level = 'awake';
+                        }
                         if (!groupedData[date]) {
                             groupedData[date] = {};
                         }
@@ -50,11 +53,11 @@
                         }
                         groupedData[date][level] += item.seconds; // Add the seconds directly
                     });
-
+                    
                     // First, let's sort the dates so the x-axis values are in order
                     const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(a) - new Date(b));
 
-                    const levelOrder = ['deep', 'light', 'rem', 'wake', 'short_wake']; // Order of levels
+                    const levelOrder = ['deep', 'light', 'rem', 'awake', 'short_wake', 'asleep', 'restless']; // Order of levels
                     const traces = [];
 
                     levelOrder.forEach(level => {
@@ -69,17 +72,16 @@
                         traces.push({
                             x: x,
                             y: y,
-                            type: 'scatter',
-                            mode: 'none',
-                            fill: 'tonexty',
+                            type: 'bar',
                             name: level,
-                            stackgroup: 'one', // All traces in the same stackgroup
-                            fillcolor: getStageColor(level)
+                            marker: {
+                                color: getStageColor(level)
+                            }
                         });
                     });
 
                     var layout = {
-                        title: 'Sleep Log by Date - Stacked Area Chart',
+                        title: 'Sleeplog Ranges By Date - 100 % Bar Chart',
                         yaxis: { title: 'Percent of Total Sleep', ticksuffix: '%' },
                         xaxis: {
                             title: '',
@@ -88,6 +90,7 @@
                             tickformat: "%Y-%m-%d", 
                             tickangle: -45
                         },
+                        barmode: 'stack'
                     };
 
                     Plotly.newPlot('sleeplog_by_date_area', traces, layout);
@@ -100,8 +103,10 @@
                 case 'deep': return '#333A73';
                 case 'light': return '#387ADF';
                 case 'rem': return '#50C4ED';
-                case 'wake': return '#FF407D';
                 case 'short_wake': return '#FFDDE8';
+                case 'awake': return '#FF407D';
+                case 'restless': return '#C0C0C0';
+                case 'asleep': return '#808080';
                 default: return '#000000';
             }
         }

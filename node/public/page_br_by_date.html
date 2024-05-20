@@ -39,7 +39,11 @@
                 .then(response => response.json())
                 .then(data => {
                     //const dates = data.map(item => new Date(item.date));
-                    const dates = data.map(item => item.date); // different from datetime bc we just want dates
+                    const dates = data.map(item => {
+                        // Append time part to ensure local midnight
+                        const localDate = new Date(item.date + 'T00:00:00'); 
+                        return localDate;
+                    });
                     const fullSleepBr = data.map(item => item.fullSleepBr);
                     const deepSleepBr = data.map(item => item.deepSleepBr);
                     const lightSleepBr = data.map(item => item.lightSleepBr);

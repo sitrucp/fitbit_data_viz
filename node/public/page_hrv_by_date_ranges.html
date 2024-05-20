@@ -8,7 +8,7 @@
 </head>
 
 <body>
-    <h2><a href="index.html">Home</a> | HRV By Date and Ranges</h2>
+    <h2><a href="index.html">Home</a> | HRV Ranges By Date - Bar Chart</h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -25,7 +25,7 @@
             let startDate = new Date();
             startDate.setHours(0, 0, 0, 0);
             endDate.setHours(0, 0, 0, 0);
-            startDate.setDate(endDate.getDate() - 120); // set start x days earlier than today
+            startDate.setDate(endDate.getDate() - 1600); // set start x days earlier than today
             document.getElementById('start').valueAsDate = startDate;
             document.getElementById('end').valueAsDate = endDate;
             loadData();  // Initial update to draw all charts based on the default selection
@@ -38,10 +38,10 @@
             fetch(`http://localhost:3000/api/hrv?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
                 .then(data => {
-                    // Group data by date and rmssdBinRange
+                    // Group and count by date and rmssdBinRange
                     const groupedData = {};
                     data.forEach(item => {
-                        const date = (new Date(item.dateTime)).toISOString().split('T')[0]; // normalize date to YYYY-MM-DD format
+                        const date = new Date(item.date).toISOString(); 
                         const range = item.rmssdBinRange;
                         if (!groupedData[date]) {
                             groupedData[date] = {};
@@ -75,15 +75,14 @@
                         traces.push({
                             x: x,
                             y: y,
-                            type: 'scatter',
-                            mode: 'lines',
+                            type: 'bar',
                             name: range,
                             stackgroup: 'one'
                         });
                     });
 
                     var layout = {
-                        title: 'HRV (RMSSD) By Date - Range Bins 100% Stacked',
+                        title: 'HRV (RMSSD) Ranges By Date - Bar Chart',
                         yaxis: { 
                             title: 'Percent Total', 
                             ticksuffix: '%' 
@@ -95,6 +94,7 @@
                             tickformat: "%Y-%m-%d %H", 
                             tickangle: -45
                         },
+                        barmode: 'stack'
                     };
 
                     Plotly.newPlot('hrv_by_date_area', traces, layout);

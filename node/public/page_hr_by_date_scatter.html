@@ -41,16 +41,22 @@
                     const dates = data.map(item => new Date(item.dateTime));
                     const heartRates = data.map(item => item.heartRate);
                     const restingHeartRates = data.map(item => item.restingHeartRate);
-                    const age = 58;
-                    const restingHeartRate = 53;
-                    const maxHeartRate = 220 - age;
-                    const heartRateReserve = maxHeartRate - restingHeartRate;
+                   
+                    // Calculate maximum and minimum values
+                    const maxHeartRate = parseFloat(Math.max(...heartRates).toFixed(1));
+                    const minHeartRate = parseFloat(Math.min(...heartRates).toFixed(1));
 
-                    // Calculate zone thresholds based on Heart Rate Reserve (HRR)
-                    const zone1UpperLimit = restingHeartRate + heartRateReserve * 0.5;
-                    const zone2UpperLimit = restingHeartRate + heartRateReserve * 0.65;
-                    const zone3UpperLimit = restingHeartRate + heartRateReserve * 0.75;
-                    const zone4UpperLimit = restingHeartRate + heartRateReserve * 0.9;
+                    // Calculate average HR value
+                    const totalHr = heartRates.reduce((acc, value) => acc + value, 0);
+                    const avgHr = parseFloat((totalHr / heartRates.length).toFixed(1));
+
+                    // Calculate zone thresholds based on Max heart rate 162 bpm & Fitbit methodology
+                    const zone1UpperLimit = 96; // Normal
+                    const zone2UpperLimit = 118; // Fat Burn
+                    const zone3UpperLimit = 145; // Cardio
+                    const zone4UpperLimit = 162; // Peak
+
+                    //console.log('zone1UpperLimit Normal', zone1UpperLimit, 'zone2UpperLimit Fat Burn',zone2UpperLimit,'zone3UpperLimit Cardio', zone3UpperLimit,'zone4UpperLimit Peak',zone4UpperLimit);
 
                     // Calculate colors for each heart rate based on dynamically calculated zones
                     const heartRateColors = heartRates.map(rate => {
@@ -93,6 +99,8 @@
                         yaxis: {
                             title: '', // Consider removing if not necessary
                             range: ['auto', 'auto'],
+                            tick0: 30,  // This sets the starting tick at x
+                            dtick: 10,  // This sets the ticks to appear every x units
                             tickfont: { size: 10 },
                         },
                         legend: {
@@ -100,6 +108,34 @@
                             xanchor: 'left',
                             y: 1
                         },
+                        annotations: [{
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: 1.05,
+                            yanchor: 'bottom',
+                            text: `Max HR: ${maxHeartRate} bpm`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: 1,
+                            yanchor: 'bottom',
+                            text: `Min HR: ${minHeartRate} bpm`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: .95,
+                            yanchor: 'bottom',
+                            text: `Avg HR: ${avgHr}`,
+                            showarrow: false
+                        }],
                         autosize: true
                     };
 

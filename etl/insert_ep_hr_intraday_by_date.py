@@ -20,6 +20,18 @@ def compute_daily_aggregates(measurements):
     daily_min = min(values)
     return daily_average, daily_max, daily_min
 
+bins = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]  # Include 0 to handle lower boundary
+labels = ['0-10', '10-20', '20-30', '30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100+']
+	
+def assign_hr_bin(heart_rate):
+    bins = [40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170]
+    labels = ['30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '100-110', '110-120', '120-130', '130-140', '140-150', '150-160', '160-170', '170+']
+    # Return the label corresponding to the bin into which the rmssd falls
+    for i, upper_limit in enumerate(bins):
+        if heart_rate <= upper_limit:
+            return labels[i]  # Correctly return the label corresponding to the bin
+    return '170+'  # Handle any heart_rate greater than the last specified bin
+	
 def main():
     module_name_str = "get_ep_hr_intraday_by_date"
 
@@ -46,17 +58,32 @@ def main():
             with open(file, 'r') as f:
                 data = json.load(f)
                 
-                if "activities-heart" in data and "activities-heart-intraday" in data:
+                #if "activities-heart" in data and "activities-heart-intraday" in data:
+                if "activities-heart" in data and data["activities-heart"] and "activities-heart-intraday" in data:
                     date = data['activities-heart'][0]['dateTime']
-                    restingHeartRate = data["activities-heart"][0]["value"]["restingHeartRate"]
+                    restingHeartRate = data["activities-heart"][0]["value"].get("restingHeartRate", None)
                     measurements = []
+                    hrBinRanges = []
                     
                     for entry in data["activities-heart-intraday"]["dataset"]:
+                        bin_range = assign_hr_bin(entry['value'])
                         datetime_plus_time = datetime.strptime(f"{data['activities-heart'][0]['dateTime']} {entry['time']}", '%Y-%m-%d %H:%M:%S')
                         datetime_plus_time_str = datetime_plus_time.strftime('%Y-%m-%dT%H:%M:%S')
-                        measurements.append({'dateTime': datetime_plus_time_str, 'heartRate': entry['value']})
-                    
+                        measurements.append({'dateTime': datetime_plus_time_str, 'heartRate': entry['value'], 'binRange': bin_range})
+                        hrBinRanges.append(bin_range)
+
+                    # Compute count of heart rates in each zone
+                    hr_bin_counts = {bin_range: hrBinRanges.count(bin_range) for bin_range in set(hrBinRanges)}
+
+                    # Prepare the hrZones array object
+                    hr_zones = [{'hrBinRange': bin_range, 'count': count} for bin_range, count in hr_bin_counts.items()]
+
                     daily_average, daily_max, daily_min = compute_daily_aggregates(measurements)
+
+                    minutes_normal = data["activities-heart"][0]["value"]["heartRateZones"][0].get("minutes", None)
+                    minutes_fat_burn = data["activities-heart"][0]["value"]["heartRateZones"][1].get("minutes", None)
+                    minutes_cardio = data["activities-heart"][0]["value"]["heartRateZones"][2].get("minutes", None)
+                    minutes_peak = data["activities-heart"][0]["value"]["heartRateZones"][3].get("minutes", None)
 
                     new_document = {
                         'date': date,
@@ -64,7 +91,13 @@ def main():
                         'dailyAverage': daily_average,
                         'dailyMax': daily_max,
                         'dailyMin': daily_min,
+                        'minutesNormal': minutes_normal,
+                        'minutesFatBurn': minutes_fat_burn,
+                        'minutesCardio': minutes_cardio,
+                        'minutesPeak': minutes_peak,
+                        'countMeasurements': len(measurements), 
                         'measurements': measurements,
+                        'hrZones': hr_zones,
                         'lastModified': datetime.now().isoformat()
                     }
 

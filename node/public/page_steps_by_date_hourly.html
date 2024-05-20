@@ -8,7 +8,7 @@
 </head>
 
 <body>
-    <h2><a href="index.html">Home</a> | Steps By Date - Bar Chart</h2>
+    <h2><a href="index.html">Home</a> | Steps By Date - Hourly Bar Chart</h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -36,7 +36,7 @@
             const endDate = document.getElementById('end').value;
 
             // Fetch data from your API
-            fetch(`http://localhost:3000/api/steps?start=${startDate}&end=${endDate}`)
+            fetch(`http://localhost:3000/api/steps_hourly?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
                 .then(data => {
                     const dates = data.map(item => new Date(item.dateTime));
@@ -51,7 +51,7 @@
                             type: 'bar',
                             name: 'Hourly Steps',
                             marker: {
-                                color: 'rgba(51, 51, 51, 1)'  // Teal for steps #008080
+                                color: 'rgba(0, 128, 128, 0.7)',  // teal
                             },
                             width: 3600000 * 0.9 // 90% of an hour in milliseconds
                         },
@@ -62,7 +62,7 @@
                             mode: 'lines',
                             name: 'Cumulative Steps',
                             line: {
-                                color: 'rgba(169, 169, 169, 1)'  // Orange for cumulative steps #FCBF49
+                                color: 'rgba(169, 169, 169, 0.5)'  // Orange for cumulative steps #FCBF49
                             }
                         },
                         {
@@ -119,4 +119,4 @@
     </script>
 </body>
 
-</html>
+</html>>

@@ -39,7 +39,15 @@
                 .then(data => {
                     const dates = data.map(item => new Date(item.dateTime));
                     const spo2 = data.map(item => item.spo2);
-                    const daily_averages = data.map(item => item.dailyAvg);
+                    const dailyAvg = data.map(item => item.dailyAvg);
+
+                    // Calculate maximum and minimum values
+                    const maxSpo2 = parseFloat(Math.max(...spo2).toFixed(1));
+                    const minSpo2 = parseFloat(Math.min(...spo2).toFixed(1));
+
+                    // Calculate average SpO2 value
+                    const totalSpo2 = spo2.reduce((acc, value) => acc + value, 0);
+                    const avgSpo2 = parseFloat((totalSpo2 / spo2.length).toFixed(1));
 
                     var traces = [
                         {
@@ -55,7 +63,7 @@
                         },
                         {
                             x: dates,
-                            y: daily_averages,
+                            y: dailyAvg,
                             mode: 'lines',
                             type: 'scatter',
                             name: 'Daily Average',
@@ -111,6 +119,34 @@
                                 },
                             },
                         ],
+                        annotations: [{
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: 1.05,
+                            yanchor: 'bottom',
+                            text: `Max SpO2: ${maxSpo2} bpm`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: 1,
+                            yanchor: 'bottom',
+                            text: `Min SpO2: ${minSpo2} bpm`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: .95,
+                            yanchor: 'bottom',
+                            text: `Avg SpO2: ${avgSpo2} bpm`,
+                            showarrow: false
+                        }],
                     };
 
                     Plotly.newPlot('spo2_by_date_scatter', traces, layout);

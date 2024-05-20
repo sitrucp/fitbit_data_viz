@@ -109,38 +109,44 @@ def make_request(start_date, end_date, base_url, module_str, endpoint_type, max_
             perform_request(url, curr_date_str, module_str, tokens)
             
     elif endpoint_type == "interval":
-        # Calculate the end_date based on max_days
-        if max_days is not None:
-            max_end_date = start_date + timedelta(days=max_days - 1)  # -1 because start_date counts as day 1
-            # Use the minimum of max_end_date and current_date to ensure we don't exceed max_days or query future dates
-            end_date = min(max_end_date, current_date)
-        else:
-            end_date = min(end_date, current_date)  # Ensure we don't query future dates
-        
-        # Format start_date and end_date for URL replacement
-        start_date_str = start_date.strftime("%Y-%m-%d")
-        end_date_str = end_date.strftime("%Y-%m-%d")
-        
-        # Construct the URL with the actual start and end dates
-        url = base_url.replace("start_date", start_date_str).replace("end_date", end_date_str)
-        #date_range_str = f"{start_date_str}_to_{end_date_str}"
-        
-        # Call perform_request with the adjusted date range
-        perform_request(url, end_date_str, module_str, tokens)
+        # while loop to continuously get ranges until current date
+        while start_date <= current_date:
+            # Calculate the end_date based on max_days
+            if max_days is not None:
+                max_end_date = start_date + timedelta(days=max_days - 1)  # -1 because start_date counts as day 1
+                # Use the minimum of max_end_date and current_date to ensure we don't exceed max_days or query future dates
+                end_date = min(max_end_date, current_date)
+            else:
+                end_date = min(end_date, current_date)  # Ensure we don't query future dates
+            
+            # Format start_date and end_date for URL replacement
+            start_date_str = start_date.strftime("%Y-%m-%d")
+            end_date_str = end_date.strftime("%Y-%m-%d")
+            
+            # Construct the URL with the actual start and end dates
+            url = base_url.replace("start_date", start_date_str).replace("end_date", end_date_str)
+            #date_range_str = f"{start_date_str}_to_{end_date_str}"
+            
+            # Call perform_request with the adjusted date range
+            perform_request(url, end_date_str, module_str, tokens)
+
+            # Prepare next interval
+            start_date = end_date + timedelta(days=1)  # Increment start_date to day after last end_date
+            if start_date > current_date:
+                break  # Exit if the new start_date is beyond the current date
 
 # Perform request function
 def perform_request(url, date_str, module_str, tokens, attempt=1):
     MAX_ATTEMPTS = 3  # Define a maximum number of attempts
     filename = f"{module_str.replace('get_ep_', '', 1)}_{date_str.replace('-', '_')}.json"
-    print(url)
-
+    
     try:
         headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
         response = requests.get(url, headers=headers)
 
         # Process successful response
         if response.status_code == 200:
-            logging.info(f"Request success: {filename} - Rate Limit Remaining: {response.headers.get('fitbit-rate-limit-remaining')} - Rate Limit Reset: {response.headers.get('fitbit-rate-limit-reset')}")
+            logging.info(f"Request success: {filename} - Rate Limit Calls Remaining: {response.headers.get('fitbit-rate-limit-remaining')} - Rate Limit Reset Minutes: {response.headers.get('fitbit-rate-limit-reset')}")
             data = response.json()
 
             # Construct the absolute path to the JSON file
@@ -151,12 +157,20 @@ def perform_request(url, date_str, module_str, tokens, attempt=1):
                 json.dump(data, f, ensure_ascii=False, indent=4)
                 
             write_response_log(module_str, date=date_str, status="success")
+            print("success " + url)
 
         # Handle rate limiting
         elif response.status_code == 429 and attempt < MAX_ATTEMPTS:
-            reset_time = int(response.headers.get('fitbit-rate-limit-reset', 60))
-            logging.warning(f"Request rate limited:  {filename} - waiting for {reset_time + 5} seconds before retrying. Attempt: {attempt}")
-            time.sleep(reset_time + 5)
+            fitbit_reset_value = response.headers.get('fitbit-rate-limit-reset')
+            #fitbit_quota_value = response.headers.get('fitbit-rate-limit-limit')
+            if fitbit_reset_value is not None:
+                reset_time = int(fitbit_reset_value)
+                source = "api"
+            else:
+                reset_time = 3600  # Default value used when header is not present
+                source = "code"
+            logging.warning(f"Request rate limited:  {filename} - fitbit_reset_value from {source} is {reset_time} so waiting for reset_time + 120 {reset_time + 120} seconds before retrying. Attempt: {attempt}")
+            time.sleep(reset_time + 120)
             perform_request(url, date_str, module_str, tokens, attempt + 1)  # Retry the request
 
         # Token might be expired

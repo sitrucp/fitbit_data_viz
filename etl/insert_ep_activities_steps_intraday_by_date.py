@@ -40,14 +40,32 @@ def main():
                     date = data['activities-steps'][0]['dateTime']
                     total_steps = data['activities-steps'][0]['value']
                     measurements = []
+                    hourly_steps = [0] * 24  # Initialize a list of zeros for 24 hours
+                    hour_lt_250_steps = 0
+                    hour_gt_250_steps = 0
+
                     for entry in data['activities-steps-intraday']['dataset']:
+                        # Create measurements array
                         datetime_plus_time = datetime.strptime(f"{date} {entry['time']}", '%Y-%m-%d %H:%M:%S')
                         measurements.append({'dateTime': datetime_plus_time, 'steps': int(entry['value'])})
+
+                        # Create hourlySteps array
+                        hour = int(entry['time'][:2])  # Extracting hour from the time
+                        hourly_steps[hour] += int(entry['value'])  # Sum up steps directly by hour index
+                    
+                    # Format hourlySteps array
+                    formatted_hourly_steps = [{'dateHour': f"{date}T{str(hour).zfill(2)}:00:00", 'value': steps} for hour, steps in enumerate(hourly_steps)]
+
+                    hour_gt_250_steps = sum(1 for entry in formatted_hourly_steps if entry['value'] >= 250)
+                    hour_lt_250_steps = sum(1 for entry in formatted_hourly_steps if entry['value'] < 250)
 
                     new_document = {
                         'date': date,
                         'totalSteps': int(total_steps),
                         'measurements': measurements,
+                        'measurementsHourly': formatted_hourly_steps,
+                        'hourGt250Steps': hour_gt_250_steps,
+                        'hourLt250Steps': hour_lt_250_steps,
                         'lastModified': datetime.now().isoformat()
                     }
                     

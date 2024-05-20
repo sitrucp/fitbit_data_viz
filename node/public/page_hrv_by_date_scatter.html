@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>HRV (RMSSD) By Date Scatter</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
+
 <body>
     <h2><a href="index.html">Home</a> | HRV By Date - Scatter Chart</h2>
 
@@ -31,44 +33,53 @@
         function loadData() {
             const startDate = document.getElementById('start').value;
             const endDate = document.getElementById('end').value;
-            
+
             fetch(`http://localhost:3000/api/hrv?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
                 .then(data => {
                     const dates = data.map(item => new Date(item.dateTime));
                     const rmssd = data.map(item => item.rmssd);
                     const dailyAverageRmssd = data.map(item => item.dailyAverageRmssd);
-              
+
+                    // Calculate maximum and minimum values
+                    const maxRmssd = parseFloat(Math.max(...rmssd).toFixed(1));
+                    const minRmssd = parseFloat(Math.min(...rmssd).toFixed(1));
+
+                    // Calculate average SpO2 value
+                    const totalRmssd = rmssd.reduce((acc, value) => acc + value, 0);
+                    const avgRmssd = parseFloat((totalRmssd / rmssd.length).toFixed(1));
+
                     var traces = [
-                    {
-                        x: dates,
-                        y: rmssd,
-                        mode: 'markers',
-                        connectgaps: false, // only works if x axis is datetime values not strings
-                        type: 'scatter',
-                        name: 'Individual RMSSD Values',
-                        marker: {
-                            color: 'black'
+                        {
+                            x: dates,
+                            y: rmssd,
+                            mode: 'markers',
+                            connectgaps: false, // only works if x axis is datetime values not strings
+                            type: 'scatter',
+                            name: 'Individual RMSSD Values',
+                            marker: {
+                                color: 'black'
+                            }
+                        }, {
+                            x: dates,
+                            y: dailyAverageRmssd,
+                            mode: 'lines',
+                            type: 'scatter',
+                            name: 'Daily Average',
+                            line: {
+                                color: "rgba(255, 99, 132, 1)", // pink
+                                dash: "dash",
+                            },
                         }
-                    }, {
-                        x: dates,
-                        y: dailyAverageRmssd,
-                        mode: 'lines',
-                        type: 'scatter',
-                        name: 'Daily Average',
-                        line: {
-                            color: "rgba(255, 99, 132, 1)", // pink
-                            dash: "dash",
-                        },
-                    }];
+                    ];
 
                     var layout = {
                         title: 'HRV (RMSSD) By Date',
                         xaxis: {
-                            title: '', 
+                            title: '',
                             type: 'date',
                             tickfont: { size: 10 },
-                            tickformat: "%Y-%m-%d %H:%M", 
+                            tickformat: "%Y-%m-%d %H:%M",
                             tickangle: -45,
                         },
                         yaxis: {
@@ -77,7 +88,35 @@
                             tick0: 10,  // This sets the starting tick at x
                             dtick: 5,  // This sets the ticks to appear every x units
                             tickfont: { size: 10 },
-                        }
+                        },
+                        annotations: [{
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: 1.05,
+                            yanchor: 'bottom',
+                            text: `Max RMSSD: ${maxRmssd} bpm`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: 1,
+                            yanchor: 'bottom',
+                            text: `Min RMSSD: ${minRmssd} bpm`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: .95,
+                            yanchor: 'bottom',
+                            text: `Avg Rmssd: ${avgRmssd}`,
+                            showarrow: false
+                        }],
                     };
 
                     Plotly.newPlot('hrv_by_date_scatter', traces, layout);
@@ -86,4 +125,5 @@
         }
     </script>
 </body>
+
 </html>

@@ -7,7 +7,7 @@ function loadSpo2ByDateBarData() {
     // Default dates for the first load
     endDate = new Date();
     startDate = new Date();
-    startDate.setDate(endDate.getDate() - 365); // Set start 365 days earlier than today
+    startDate.setDate(startDate.getDate() - 365); // Set start x days earlier than today
     startDate = startDate.toISOString().split("T")[0];
     endDate = endDate.toISOString().split("T")[0];
     isFirstLoadSpO2 = false;
@@ -23,9 +23,9 @@ function loadSpo2ByDateBarData() {
       const desiredMinimum = 95;
       let dailyData = {};
 
-      // Organize data by date using 'date' field
+      // Organize data by date using the 'date' field directly
       data.forEach((item) => {
-        const dateStr = item.date; // Use the 'date' field directly
+        const dateStr = item.date; //.toISOString().split("T")[0]; // Use the 'date' field directly
         if (!dailyData[dateStr]) {
           dailyData[dateStr] = {
             countAbove: 0,
@@ -44,51 +44,56 @@ function loadSpo2ByDateBarData() {
         dailyData[dateStr].dailyAverage += item.spo2;
         dailyData[dateStr].dailyTotal++;
       });
+      console.log(dailyData);
+      // Prepare plot data
+      const dates = [];
+      const percentAbove = [];
+      const percentBelow = [];
+      const dailyAverages = [];
 
-      const dates = Object.keys(dailyData).map((date) => {
+      Object.keys(dailyData).forEach((date) => {
+        const dayData = dailyData[date];
+        // Correctly handle the date to ensure it reflects the local date without time zone offset
         const parts = date.split("-");
         const year = parseInt(parts[0], 10);
         const month = parseInt(parts[1], 10) - 1; // Months are zero-indexed
         const day = parseInt(parts[2], 10);
-        return new Date(year, month, day); // Create Date object without time zone confusion
+        dates.push(new Date(year, month, day));
+
+        percentAbove.push((dayData.countAbove / dayData.total) * 100);
+        percentBelow.push((-dayData.countBelow / dayData.total) * 100);
+        dailyAverages.push(dayData.dailyAverage / dayData.dailyTotal);
       });
 
-      //const dates = Object.keys(dailyData).map(date => new Date(date));
-      const percentAbove = Object.values(dailyData).map(
-        (data) => (data.countAbove / data.total) * 100
-      );
-      const percentBelow = Object.values(dailyData).map(
-        (data) => (-data.countBelow / data.total) * 100
-      );
-      const dailyAverages = Object.values(dailyData).map(
-        (data) => data.dailyAverage / data.dailyTotal
-      );
-
-      var traceAbove = {
-        x: dates,
-        y: percentAbove,
-        name: "Above Desired Minimum",
-        type: "bar",
-        marker: { color: "blue" },
-      };
-
-      var traceBelow = {
-        x: dates,
-        y: percentBelow,
-        name: "Below Desired Minimum",
-        type: "bar",
-        marker: { color: "red" },
-      };
-
-      var traceAverages = {
-        x: dates,
-        y: dailyAverages,
-        type: "scatter",
-        mode: "lines+markers",
-        name: "Daily Average",
-        marker: { color: "black", size: 5 },
-        yaxis: "y2",
-      };
+      var traces = [
+        {
+          x: dates,
+          y: percentAbove,
+          name: "Above Desired Minimum",
+          type: "bar",
+          marker: { 
+            color: 'rgba(0, 128, 128, 0.7)',  // teal
+         }
+        },
+        {
+          x: dates,
+          y: percentBelow,
+          name: "Below Desired Minimum",
+          type: "bar",
+          marker: { 
+            color: 'rgba(247, 127, 0, 0.7)',  // Cardio orange
+         }
+        },
+        {
+          x: dates,
+          y: dailyAverages,
+          type: "scatter",
+          mode: "lines+markers",
+          name: "Daily Average",
+          marker: { color: "black", size: 5 },
+          yaxis: "y2",
+        },
+      ];
 
       var layout = {
         title: {
@@ -135,11 +140,7 @@ function loadSpo2ByDateBarData() {
         autosize: true,
       };
 
-      Plotly.newPlot(
-        "spo2_by_date_bar",
-        [traceAbove, traceBelow, traceAverages],
-        layout
-      );
+      Plotly.newPlot("spo2_by_date_bar", traces, layout);
     })
     .catch((error) => console.error("Error loading data:", error));
 }

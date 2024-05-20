@@ -9,6 +9,7 @@ def get_data(start_date, end_date):
 
     # Get Sleep Log by Date Range
     # https://dev.fitbit.com/build/reference/web-api/sleep/get-sleep-log-by-date-range/
+    # alternatively get by date https://api.fitbit.com/1.2/user/-/sleep/date/2020-01-01.json
     # https://api.fitbit.com/1.2/user/-/sleep/date/2020-01-01/2020-01-05.json
     # Maximum range: 100 days
 
@@ -18,9 +19,9 @@ def get_data(start_date, end_date):
     get_response.make_request(start_date, end_date, url, module_str, endpoint_type, max_days=100)
 
 def main():
-    # Set start_date and end_date parameters
-    start_date = date(2024, 2, 8)
-    end_date = date(2024, 4, 15)
+    # Set start_date and end_date parameters 
+    start_date = date(2013, 8, 25)
+    end_date = date(2020, 1, 1)
 
     # Call the function with the parameters
     get_data(start_date, end_date)

@@ -27,7 +27,7 @@
             let startDate = new Date();
             startDate.setHours(0, 0, 0, 0);
             endDate.setHours(0, 0, 0, 0);
-            startDate.setDate(endDate.getDate() - 2000);
+            startDate.setDate(endDate.getDate() - 1600);
             document.getElementById('start').valueAsDate = startDate;
             document.getElementById('end').valueAsDate = endDate;
             loadData();  // Initial update to draw all charts based on the default selection
@@ -37,11 +37,14 @@
             const startDate = document.getElementById('start').value;
             const endDate = document.getElementById('end').value;
 
-            fetch(`http://localhost:3000/api/rhr?start=${startDate}&end=${endDate}`)
+            fetch(`http://localhost:3000/api/hr_daily?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
                 .then(data => {
-                    //const dates = data.map(item => new Date(item.date));
-                    const dates = data.map(item => item.date); // different from datetime bc we just want dates
+                    const dates = data.map(item => {
+                        // Append time part to ensure local midnight
+                        const localDate = new Date(item.date + 'T00:00:00');
+                        return localDate;
+                    });
                     const restingHeartRates = data.map(item => item.restingHeartRate);
                     const dailyAvg = data.map(item => item.dailyAvg);
                     const dailyMax = data.map(item => item.dailyMax);
@@ -54,74 +57,59 @@
                             mode: 'lines+markers',
                             type: 'scatter',
                             name: 'Resting Heart Rate',
-                            marker: { color: 'black', size: 3 }, 
+                            marker: {
+                                color: 'black',
+                                size: 3
+                            },
                         },
                         {
-                            name: 'Daily Max',
-                            x: dates,
-                            y: dailyMax,
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: 'rgba(211, 211, 211, 0.7)' },
-                            fill: 'tonexty', // fill to the next trace
-                            fillcolor: 'rgba(211, 211, 211, 0.7)',
-                            hoverinfo: "text+x+y",
-                            text: "Heart Rate Daily Max",
-                            hoverlabel: { namelength: -1 },
-                        },
-                        {
-                            // create this trace just to allow min to fill up to it
-                            // and allow max trace to have fill wthout overlapping min trace fill
-                            name: 'Dummy RHR',
-                            x: dates,
-                            y: restingHeartRates,
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: 'transparent' },
-                            fill: 'tonexty', // fill to the next trace
-                            fillcolor: 'transparent',
-                            showlegend: false,
-                            hoverinfo: 'none',
-                        },
-                        {
-                            name: 'Daily Min',
+                            // Invisible base bars
                             x: dates,
                             y: dailyMin,
-                            type: 'scatter',
-                            mode: 'lines',
-                            line: { color: 'rgba(211, 211, 211, 0.7)' },
-                            fill: 'tonexty', // fill to the next trace
-                            fillcolor: 'rgba(211, 211, 211, 0.7)', // light pink
-                            hoverinfo: "text+x+y",
-                            text: "Heart Rate Daily Min",
-                            hoverlabel: { namelength: -1 },
+                            type: 'bar',
+                            marker: {
+                                color: 'rgba(255, 255, 255, 0)' // transparent
+                            },
+                            hoverinfo: 'none', // Disable hover info
+                            showlegend: false // Do not show in legend
                         },
+                        {
+                            // Visible bars from min to max
+                            x: dates,
+                            y: dailyMax.map((max, i) => max - dailyMin[i]), // Subtract min from max to get the 'floating' part size
+                            type: 'bar',
+                            marker: {
+                                color: 'rgba(0, 128, 128, 0.7)',  // teal
+                                line: {
+                                    color: 'rgba(0, 128, 128, 0.7)',  // teal
+                                    width: 1 // Border width
+                                }
+                            },
+                            name: 'Heart Rate Range'
+                        }
                     ];
-
                     var layout = {
                         title: 'Resting Heart Rate By Date',
+                        barmode: 'stack',
                         xaxis: {
                             title: '',
                             type: 'date',
                             tickfont: { size: 10 },
                             tickformat: "%Y-%m-%d",
                             tickangle: -45,
-                            //tickmode: 'array',
-                            //tickvals: dates,
                         },
                         yaxis: {
                             title: '',
-                            range: [30, 'auto'],
+                            range: [30, 190],
                             tick0: 30,  // This sets the starting tick at 30
-                            dtick: 10,  // This sets the ticks to appear every 10 units
+                            dtick: 5,  // This sets the ticks to appear every 10 units
                             tickfont: { size: 10 },
                         },
                         legend: {
                             x: 1,
                             xanchor: 'left',
                             y: 1
-                        },
-                        autosize: true
+                        }
                     };
 
                     Plotly.newPlot('rhr_by_date_line', traces, layout);

@@ -57,9 +57,6 @@
                         dailyData[dateStr].dailyTotal++;
                     });
 
-                    //console.log('data:', data);
-                    //console.log('dailyData:', dailyData);
-
                     // Prepare plot data
                     const dates = [];
                     const percentAbove = [];
@@ -88,49 +85,52 @@
                     const { slope, intercept } = linearRegression(regressionData);
                     const trendLine = dates.map((date, index) => intercept + slope * index);
 
-                    var traceAbove = {
-                        x: dates,
-                        y: percentAbove,
-                        name: 'Above Desired Minimum',
-                        type: 'bar',
-                        marker: { color: 'blue' }
-                    };
-
-                    var traceBelow = {
-                        x: dates,
-                        y: percentBelow,
-                        name: 'Below Desired Minimum',
-                        type: 'bar',
-                        marker: { color: 'red' }
-                    };
-
-                    var traceAverages = {
-                        x: dates,
-                        y: dailyAverages,
-                        type: 'scatter',
-                        mode: 'lines+markers',
-                        name: 'Daily Average',
-                        marker: { color: 'black' },
-                        yaxis: 'y2'
-                    };
-
-                    var traceTrendLine = {
-                        x: dates,
-                        y: trendLine,
-                        type: 'scatter',
-                        mode: 'lines',
-                        name: 'Trend Line',
-                        line: { color: 'yellow', width: 2, dash: 'dash' },
-                        yaxis: 'y2'
-                    };
+                    var traces = [
+                        {
+                            x: dates,
+                            y: percentAbove,
+                            name: 'Above Desired Minimum',
+                            type: 'bar',
+                            marker: { 
+                                color: 'rgba(0, 128, 128, 0.7)',  // teal
+                             }
+                        },
+                        {
+                            x: dates,
+                            y: percentBelow,
+                            name: 'Below Desired Minimum',
+                            type: 'bar',
+                            marker: { 
+                                color: 'rgba(247, 127, 0, 0.7)',  // Cardio orange
+                             }
+                        },
+                        {
+                            x: dates,
+                            y: dailyAverages,
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            name: 'Daily Average',
+                            marker: { color: 'black' },
+                            yaxis: 'y2'
+                        },
+                        {
+                            x: dates,
+                            y: trendLine,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: 'Trend Line',
+                            line: { color: 'yellow', width: 2, dash: 'dash' },
+                            yaxis: 'y2'
+                        }
+                    ]
 
                     var layout = {
                         title: 'SpO2 Measurement Counts Relative to 95%',
                         xaxis: {
-                            title: '', 
+                            title: '',
                             type: 'date',
                             tickfont: { size: 10 },
-                            tickformat: "%Y-%m-%d", 
+                            tickformat: "%Y-%m-%d",
                             tickangle: -45,
                         },
                         yaxis: {
@@ -146,7 +146,7 @@
                         barmode: 'relative'
                     };
 
-                    Plotly.newPlot('spo2_by_date_bar', [traceAbove, traceBelow, traceAverages, traceTrendLine], layout);
+                    Plotly.newPlot('spo2_by_date_bar', traces, layout);
                 })
                 .catch(error => console.error('Error loading data:', error));
         }

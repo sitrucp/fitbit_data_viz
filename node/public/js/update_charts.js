@@ -1,10 +1,10 @@
 function updateCharts() {
-    loadSleepLogData();
+  loadSleepLogData();
   loadHRByDateData();
   loadSpo2ByDateScatterData();
-  loadHrvByDateScatterData();
   loadSpo2ByDateBarData();
-  loadHrvByDateAreaData();  
+  loadHrvByDateAreaData();
+  loadHrvByDateScatterData();
   loadBrByDateScatterData();
 }
 

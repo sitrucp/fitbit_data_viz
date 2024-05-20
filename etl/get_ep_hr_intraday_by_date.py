@@ -18,8 +18,8 @@ def get_data(start_date, end_date):
 
 def main():
     # Set start_date and end_date parameters
-    start_date = date(2024, 4, 4)
-    end_date = date(2024, 4, 6)
+    start_date = date(2020, 1, 11)
+    end_date = date(2020, 12, 31)
 
     # Call the function with the parameters
     get_data(start_date, end_date)

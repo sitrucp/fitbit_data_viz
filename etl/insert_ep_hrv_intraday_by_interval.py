@@ -9,12 +9,18 @@ from pymongo import MongoClient
 from etl.response_log import get_last_response
 from etl.db_connection import get_database
 
-def compute_average_rmssd(measurements):
-    """Compute the average RMSSD from a list of measurement entries."""
-    valid_entries = [m['rmssd'] for m in measurements if 'rmssd' in m]
-    if not valid_entries:
-        return None
-    return round(sum(valid_entries) / len(valid_entries), 2)
+def compute_daily_aggregates(measurements):
+    """Compute the average RMSSD value from a list of measurements."""
+    if not measurements:
+        return None, None, None
+    
+    values = [m['rmssd'] for m in measurements if 'rmssd' in m]
+    total_rmssd = sum(values)
+    daily_average = round(total_rmssd / len(values), 1)
+    daily_max = max(values)
+    daily_min = min(values)
+
+    return daily_average, daily_max, daily_min
 
 def assign_rmssd_bin(rmssd):
     bins = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]  # Include 0 to handle lower boundary
@@ -70,14 +76,17 @@ def main():
                         }
                         measurements.append(minute_data)
 
-                    average_rmssd = compute_average_rmssd(measurements)
-
-                    # Create a document for MongoDB
+                    # Calculate the average, max, min SpO2
+                    dailyAggregate = compute_daily_aggregates(measurements)
+                    
+                    # Create new document
                     new_document = {
-                        "date": entry.get("dateTime", ""),  # Fallback to empty string if not present
-                        "measurements": measurements,
-                        "dailyAverageRmssd": average_rmssd,
-                        "lastModified": datetime.now().isoformat()  # Store timestamp in ISO format
+                        'date': entry['dateTime'], #"date": entry.get("dateTime", ""),  # Fallback to empty string if not present
+                        'dailyAverageRmssd': dailyAggregate[0],
+                        'dailyMaxRmssd': dailyAggregate[1],
+                        'dailyMinRmssd': dailyAggregate[2],
+                        'measurements': measurements,
+                        'lastModified': datetime.now().isoformat()
                     }
 
                     # Define the filter for the upsert operation using 'date'

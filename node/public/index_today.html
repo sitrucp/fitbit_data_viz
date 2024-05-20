@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fitbit Data Visualizations - Summary</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"
+        integrity="sha256-QvgynZibb2U53SsVu98NggJXYqwRL7tg3FeyfXvPOUY=" crossorigin="anonymous"></script>
+
+    <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            padding: 5px;
+        }
+
+        .grid-item {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-top: 0px;
+            padding-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 300px; /* Adjust as needed */
+        }
+
+        .content {
+            flex-grow: 1;
+            font-size: 16px; 
+        }
+
+        .chart {
+            height: 150px; /* Adjust as needed */
+        }
+
+        @media (max-width: 600px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        ul.no-bullets {
+            list-style-type: none; /* Removes bullets */
+            padding-left: 0; /* Removes indentation */
+        }
+    </style>
+
+</head>
+
+<body>
+    <H3><a href="index.html">Home</a> | Today | <a href="index_sleep.html">Sleep</a></H3>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <button id="loadDataButton">Load Data</button>
+
+    <H1>Today</H1>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <div class="content">
+                <H3>Heart Rate</H3>
+                <ul class="no-bullets">
+                    <li id="restingHeartRate"></li>
+                    <li id="dailyAverage"></li>
+                    <li id="dailyMax"></li>
+                    <li id="dailyMin"></li>
+                </ul>
+            </div>
+            <div id="heartRateViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3>Steps</H3>
+                <ul class="no-bullets">
+                    <li id="totalSteps"></li>
+                </ul>
+            </div>
+            <div id="stepsViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3>VO2 Max</H3>
+                <ul class="no-bullets">
+                    <li id="vo2MaxHigh"></li>
+                    <li id="vo2MaxLow"></li>
+                </ul>
+            </div>
+            <div id="vo2maxViz" class="chart"></div>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <div class="content">
+                <H3>Sleep</H3>
+                <ul class="no-bullets">
+                    <li id="sleepMinutesAwake"></li>
+                    <li id="sleepMinutesAsleep"></li>
+                    <li id="sleepStartTime"></li>
+                    <li id="sleepEndTime"></li>
+                </ul>
+            </div>
+            <div id="sleeplogViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3>SpO2</H3>
+                <ul class="no-bullets">
+                    <li id="spo2Avg"></li>
+                    <li id="spo2High"></li>
+                    <li id="spo2Low"></li>
+                </ul>
+            </div>
+            <div id="spo2Viz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3>HRV</H3>
+                <ul class="no-bullets">
+                    <li id="hrvAvg"></li>
+                    <li id="hrvHigh"></li>
+                    <li id="hrvLow"></li>
+                </ul>
+            </div>
+            <div id="hrvViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3>BR</H3>
+                <ul class="no-bullets">
+                    <li id="brFull"></li>
+                    <li id="brRem"></li>
+                    <li id="brDeep"></li>
+                    <li id="brLight"></li>
+                </ul>
+            </div>
+            <div id="brViz" class="chart"></div>
+        </div>
+    </div>
+
+    <script src="js/index_today.js"></script>
+</body>
+
+</html>

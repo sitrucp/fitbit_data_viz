@@ -1,4 +1,6 @@
 const express = require("express");
+// Import child_process to run python code
+const { exec } = require("child_process");
 const { MongoClient } = require("mongodb");
 const app = express();
 const port = 3000;
@@ -82,6 +84,60 @@ async function main() {
       }
     });
 
+    /////////// HR - Heart Rate Zones
+    app.get("/api/hr_zones", async (req, res) => {
+      let { start, end } = req.query;
+      // Set defaults to today's date if not provided
+      let today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      let todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999); // End of today
+
+      const startDate = start ? new Date(start) : today;
+      const endDate = end ? new Date(end) : todayEnd;
+
+      try {
+        const collection = db.collection("hr_intraday_by_date");
+        const pipeline = [
+          {
+            $match: {
+              date: {
+                $gte: startDate.toISOString().substring(0, 10),
+                $lte: endDate.toISOString().substring(0, 10),
+              },
+            },
+          },
+          {
+            $unwind: "$hrZones",
+          },
+          {
+            $project: {
+              date: 1,
+              hrBinRange: "$hrZones.hrBinRange",
+              count: "$hrZones.count",
+              _id: 0,
+            },
+          },
+        ];
+        const data = await collection.aggregate(pipeline).toArray();
+        console.log(
+          `HR Zones data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
+        );
+        res.json(
+          data.map((item) => ({
+            date: item.date,
+            hrBinRange: item.hrBinRange,
+            count: item.count,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching HR Zones data: ", error);
+        res.status(500).send("Error fetching HR Zones data: " + error.message);
+      }
+    });
+
     /////////// HR - Heart Rate
     app.get("/api/hr", async (req, res) => {
       let { start, end } = req.query;
@@ -131,7 +187,6 @@ async function main() {
             restingHeartRate: item.restingHeartRate,
           }))
         );
-        
       } catch (error) {
         console.error("Error fetching HR data: ", error);
         res.status(500).send("Error fetching HR data: " + error.message);
@@ -165,11 +220,6 @@ async function main() {
             $unwind: "$measurements",
           },
           {
-            $match: {
-              "measurements.rmssd": { $lt: 125 },
-            },
-          },
-          {
             $project: {
               date: 1,
               dailyAverageRmssd: 1,
@@ -190,6 +240,55 @@ async function main() {
       } catch (error) {
         console.error("Error fetching HRV data: ", error);
         res.status(500).send("Error fetching HRV data: " + error.message);
+      }
+    });
+
+    /////////// HRV by document date
+    app.get("/api/hrv_daily", async (req, res) => {
+      let { start, end } = req.query;
+      // Set defaults to today's date if not provided
+      let today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      let todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999); // End of today
+
+      const startDate = start ? new Date(start) : today;
+      const endDate = end ? new Date(end) : todayEnd;
+
+      try {
+        const collection = db.collection("hrv_intraday_by_date");
+        const pipeline = [
+          {
+            $match: {
+              date: {
+                $gte: startDate.toISOString().substring(0, 10),
+                $lte: endDate.toISOString().substring(0, 10),
+              },
+              dailyMaxRmssd: {
+                $lt: 125,
+              },
+            },
+          },
+          {
+            $project: {
+              date: 1,
+              dailyAverageRmssd: 1,
+              dailyMaxRmssd: 1,
+              dailyMinRmssd: 1,
+              _id: 0,
+            },
+          },
+        ];
+        const data = await collection.aggregate(pipeline).toArray();
+        console.log(
+          `HRV daily data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
+        );
+        res.json(data);
+      } catch (error) {
+        console.error("Error fetching HRV daily data: ", error);
+        res.status(500).send("Error fetching HRV daily data: " + error.message);
       }
     });
 
@@ -298,103 +397,159 @@ async function main() {
       }
     });
 
+    // Sleeplog Daily
+    app.get("/api/sleeplog_daily", async (req, res) => {
+      let { start, end } = req.query;
+      // Set defaults to today's date if not provided
+      let today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      let todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999); // End of today
+
+      const startDate = start ? new Date(start) : today;
+      const endDate = end ? new Date(end) : todayEnd;
+
+      try {
+        const collection = db.collection("sleeplog_by_date");
+        const pipeline = [
+          {
+            $match: {
+              date: {
+                $gte: startDate.toISOString().substring(0, 10),
+                $lte: endDate.toISOString().substring(0, 10),
+              },
+            },
+          },
+          {
+            $project: {
+              date: 1,
+              minutesAsleep: 1,
+              minutesAwake: 1,
+              minutesToFallAsleep: 1,
+              minutesAfterWakeup: 1,
+              timeInBed: 1,
+              startTime: 1,
+              endTime: 1,
+              efficiency: 1,
+              duration: 1,
+            },
+          },
+        ];
+        const data = await collection.aggregate(pipeline).toArray();
+        console.log(
+          `Sleeplog daily data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
+        );
+
+        res.json(data);
+      } catch (error) {
+        console.error("Error fetching Sleeplog daily data: ", error);
+        res
+          .status(500)
+          .send("Error fetching Sleeplog daily data: " + error.message);
+      }
+    });
+
     /////////// SpO2 by measurement datetime
     app.get("/api/spo2", async (req, res) => {
-        let { start, end } = req.query;
-        // Set defaults to today's date if not provided
-        let today = new Date();
-        today.setHours(0, 0, 0, 0); // Start of today
-        let todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999); // End of today
-  
-        const startDate = start ? new Date(start) : today;
-        const endDate = end ? new Date(end) : todayEnd;
-  
-        try {
-          const collection = db.collection("spo2_intraday_by_date");
-          const pipeline = [
-            {
-              $match: {
-                date: {
-                  $gte: startDate.toISOString().substring(0, 10),
-                  $lte: endDate.toISOString().substring(0, 10),
-                },
-              },
-            },
-            {
-              $unwind: "$measurements",
-            },
-            {
-              $project: {
-                date: 1,
-                dailyAvg: 1,
-                dateTime: "$measurements.dateTime",
-                spo2: "$measurements.spo2",
-                _id: 0,
-              },
-            },
-          ];
-          const data = await collection.aggregate(pipeline).toArray();
-          console.log(
-            `SpO2 data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
-              data.length
-            }`
-          );
-          res.json(data);
-        } catch (error) {
-          console.error("Error fetching SpO2 data: ", error);
-          res.status(500).send("Error fetching SpO2 data: " + error.message);
-        }
-      });
+      let { start, end } = req.query;
+      // Set defaults to today's date if not provided
+      let today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      let todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999); // End of today
 
-         /////////// SpO2 by document date
+      const startDate = start ? new Date(start) : today;
+      const endDate = end ? new Date(end) : todayEnd;
+
+      try {
+        const collection = db.collection("spo2_intraday_by_date");
+        const pipeline = [
+          {
+            $match: {
+              date: {
+                $gte: startDate.toISOString().substring(0, 10),
+                $lte: endDate.toISOString().substring(0, 10),
+              },
+            },
+          },
+          {
+            $unwind: "$measurements",
+          },
+          {
+            $project: {
+              date: 1,
+              dailyAvg: 1,
+              dateTime: "$measurements.dateTime",
+              spo2: "$measurements.spo2",
+              _id: 0,
+            },
+          },
+        ];
+        const data = await collection.aggregate(pipeline).toArray();
+        console.log(
+          `SpO2 data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
+        );
+        res.json(data);
+      } catch (error) {
+        console.error("Error fetching SpO2 data: ", error);
+        res.status(500).send("Error fetching SpO2 data: " + error.message);
+      }
+    });
+
+    /////////// SpO2 by document date
     app.get("/api/spo2_daily", async (req, res) => {
-        let { start, end } = req.query;
-        // Set defaults to today's date if not provided
-        let today = new Date();
-        today.setHours(0, 0, 0, 0); // Start of today
-        let todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999); // End of today
-  
-        const startDate = start ? new Date(start) : today;
-        const endDate = end ? new Date(end) : todayEnd;
-  
-        try {
-          const collection = db.collection("spo2_intraday_by_date");
-          const pipeline = [
-            {
-              $match: {
-                date: {
-                  $gte: startDate.toISOString().substring(0, 10),
-                  $lte: endDate.toISOString().substring(0, 10),
-                },
-              },
-            },
-            {
-              $project: {
-                date: 1,
-                dailyAvg: 1,
-                dailyMax: 1,
-                dailyMin: 1,
-                _id: 0,
-              },
-            },
-          ];
-          const data = await collection.aggregate(pipeline).toArray();
-          console.log(
-            `SpO2 daily data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
-              data.length
-            }`
-          );
-          res.json(data);
-        } catch (error) {
-          console.error("Error fetching SpO2 daily data: ", error);
-          res.status(500).send("Error fetching SpO2 daily data: " + error.message);
-        }
-      });
+      let { start, end } = req.query;
+      // Set defaults to today's date if not provided
+      let today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      let todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999); // End of today
 
-    /////////// Steps
-    app.get("/api/steps", async (req, res) => {
+      const startDate = start ? new Date(start) : today;
+      const endDate = end ? new Date(end) : todayEnd;
+
+      try {
+        const collection = db.collection("spo2_intraday_by_date");
+        const pipeline = [
+          {
+            $match: {
+              date: {
+                $gte: startDate.toISOString().substring(0, 10),
+                $lte: endDate.toISOString().substring(0, 10),
+              },
+            },
+          },
+          {
+            $project: {
+              date: 1,
+              dailyAvg: 1,
+              dailyMax: 1,
+              dailyMin: 1,
+              _id: 0,
+            },
+          },
+        ];
+        const data = await collection.aggregate(pipeline).toArray();
+        console.log(
+          `SpO2 daily data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
+        );
+        res.json(data);
+      } catch (error) {
+        console.error("Error fetching SpO2 daily data: ", error);
+        res
+          .status(500)
+          .send("Error fetching SpO2 daily data: " + error.message);
+      }
+    });
+
+    /////////// Steps Hourly and Cumulative
+    app.get("/api/steps_hourly", async (req, res) => {
       let { start, end } = req.query;
       const startDate = start
         ? new Date(start)
@@ -442,14 +597,16 @@ async function main() {
         ];
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-          `Steps data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+          `Steps Hourly data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
             data.length
           }`
         );
         res.json(calculateCumulativeSteps(data));
       } catch (error) {
-        console.error("Error fetching Steps data: ", error);
-        res.status(500).send("Error fetching Steps data: " + error.message);
+        console.error("Error fetching Steps Hourly data: ", error);
+        res
+          .status(500)
+          .send("Error fetching Steps Hourly data: " + error.message);
       }
     });
 
@@ -507,8 +664,56 @@ async function main() {
       return results;
     }
 
+    /////////// Steps Daily
+    app.get("/api/steps_daily", async (req, res) => {
+      let { start, end } = req.query;
+      const startDate = start
+        ? new Date(start)
+        : new Date(new Date().setHours(0, 0, 0, 0));
+      const endDate = end
+        ? new Date(end)
+        : new Date(new Date().setHours(23, 59, 59, 999));
+
+      try {
+        const collection = db.collection("steps_intraday_by_date");
+        const pipeline = [
+          {
+            $match: {
+              date: {
+                $gte: startDate.toISOString().substring(0, 10),
+                $lte: endDate.toISOString().substring(0, 10),
+              },
+            },
+          },
+          {
+            $project: {
+              date: 1,
+              totalSteps: 1,
+            },
+          },
+        ];
+        const data = await collection.aggregate(pipeline).toArray();
+        console.log(
+          `Steps Daily data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
+        );
+        res.json(
+          data.map((item) => ({
+            date: item.date,
+            totalSteps: item.totalSteps,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching Steps Daily data: ", error);
+        res
+          .status(500)
+          .send("Error fetching Steps Daily data: " + error.message);
+      }
+    });
+
     /////////// RHR - Resting Heart Rate
-    app.get("/api/rhr", async (req, res) => {
+    app.get("/api/hr_daily", async (req, res) => {
       let { start, end } = req.query;
       // Set defaults to today's date if not provided
       let today = new Date();
@@ -528,6 +733,9 @@ async function main() {
                 $gte: startDate.toISOString().substring(0, 10),
                 $lte: endDate.toISOString().substring(0, 10),
               },
+              // dailyMin: {
+              //   $gt: 39,
+              // },
             },
           },
           {
@@ -536,7 +744,7 @@ async function main() {
               restingHeartRate: 1,
               dailyAverage: 1,
               dailyMax: 1,
-              dailyMin: 1,  
+              dailyMin: 1,
               _id: 0,
             },
           },
@@ -605,6 +813,30 @@ async function main() {
         console.error("Error fetching VO2 Max data: ", error);
         res.status(500).send("Error fetching VO2 Max data: " + error.message);
       }
+    });
+
+    // Route to execute a Python script
+    app.get("/run-python", (req, res) => {
+      // Specify the path to the Python executable in the virtual environment
+      const pythonExecutable =
+        "C:\\Users\\bb\\Anaconda3\\envs\\venvFitbit\\python.exe";
+
+      exec(
+        `${pythonExecutable} -m etl.get_all_data`,
+        { cwd: "../" },
+        (error, stdout, stderr) => {
+          if (error) {
+            console.error(`Execution error: ${error}`);
+            return res.status(500).send("Failed to run the script.");
+          }
+          if (stderr) {
+            console.error(`Script error: ${stderr}`);
+            return res.status(500).send("Script encountered an error.");
+          }
+          res.send("Script execution completed successfully.");
+          console.log(`Script success: ${stdout}`);
+        }
+      );
     });
 
     app.listen(port, () => {

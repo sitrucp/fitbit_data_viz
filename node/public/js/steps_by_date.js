@@ -7,7 +7,7 @@ function loadStepsByDateBarData() {
         // Default dates for the first load
         endDate = new Date();
         startDate = new Date();
-        startDate.setDate(endDate.getDate() - 365); // Set start 365 days earlier than today
+        startDate.setDate(startDate.getDate() - 365); // Set start x days earlier than today
         startDate = startDate.toISOString().split('T')[0];
         endDate = endDate.toISOString().split('T')[0];
         isFirstLoadSteps = false;
