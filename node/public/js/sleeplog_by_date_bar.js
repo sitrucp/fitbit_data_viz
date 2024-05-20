@@ -39,7 +39,7 @@ function loadSleepLogData() {
 
       var layout = {
         title: {
-          text: "Sleep Stages by Date",
+          text: "Sleep Stages",
           x: 0.01, // Aligns the title to the left
           xanchor: "left", // Anchors the title text to the left edge of its container
         },

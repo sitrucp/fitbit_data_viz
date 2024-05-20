@@ -3,91 +3,91 @@
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:20"
+            "timestamp": "2024-05-20-16:24:49"
         }
     ],
     "get_ep_activities_distance_intraday_by_date": [
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:20"
+            "timestamp": "2024-05-20-16:24:50"
         }
     ],
     "get_ep_activities_elevation_intraday_by_date": [
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:21"
+            "timestamp": "2024-05-20-16:24:51"
         }
     ],
     "get_ep_activities_floors_intraday_by_date": [
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:22"
+            "timestamp": "2024-05-20-16:24:51"
         }
     ],
     "get_ep_activities_steps_intraday_by_date": [
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:23"
+            "timestamp": "2024-05-20-16:24:52"
         }
     ],
     "get_ep_br_intraday_by_interval": [
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:25"
+            "timestamp": "2024-05-20-16:24:54"
         }
     ],
     "get_ep_ecg_intraday_by_date": [
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:24"
+            "timestamp": "2024-05-20-16:24:53"
         }
     ],
     "get_ep_hr_intraday_by_date": [
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:25"
+            "timestamp": "2024-05-20-16:24:54"
         }
     ],
     "get_ep_hrv_intraday_by_interval": [
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:26"
+            "timestamp": "2024-05-20-16:24:55"
         }
     ],
     "get_ep_sleeplog_by_interval": [
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:27"
+            "timestamp": "2024-05-20-16:24:56"
         }
     ],
     "get_ep_spo2_intraday_by_interval": [
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:28"
+            "timestamp": "2024-05-20-16:24:57"
         }
     ],
     "get_ep_tempskin_by_date": [
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:29"
+            "timestamp": "2024-05-20-16:24:59"
         }
     ],
     "get_ep_vo2max_intraday_by_interval": [
         {
             "date": "2024-05-20",
             "status": "success",
-            "timestamp": "2024-05-20-14:58:28"
+            "timestamp": "2024-05-20-16:24:58"
         }
     ]
 }

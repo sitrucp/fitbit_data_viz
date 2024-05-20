@@ -47,7 +47,7 @@ function loadHRByDateData() {
 
       var layout = {
         title: {
-          text: "Heart Rate By Date",
+          text: "Heart Rate",
           x: 0.01, // Aligns the title to the left
           xanchor: "left", // Anchors the title text to the left edge of its container
         },

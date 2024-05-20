@@ -44,7 +44,7 @@ function loadBrByDateScatterData() {
         
               var layout = {
                 title: {
-                    text: "Breathing Rate By Date",
+                    text: "Breathing Rate",
                     x: 0.01, // Aligns the title to the left
                     xanchor: 'left' // Anchors the title text to the left edge of its container
                 },

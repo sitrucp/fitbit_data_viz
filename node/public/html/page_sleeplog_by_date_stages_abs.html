@@ -3,13 +3,12 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Sleeplog Ranges By Date - 100 % Bar Chart</title>
+    <title>Sleeplog Stages By Date - Absolute Chart</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <body>
-    <h2><a href="index.html">Home</a> | Sleeplog Ranges By Date - 100 % Bar Chart - <a
-            href="page_sleeplog_by_date_ranges_abs.html">Absolute Chart</a></h2>
+    <h2><a href="index.html">Home</a> | Sleep Stages By Date - 100% Chart - <a href="page_sleeplog_by_date_stages_100pct.html">100% Chart</a></h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -51,9 +50,9 @@
                         if (!groupedData[date][level]) {
                             groupedData[date][level] = 0;
                         }
-                        groupedData[date][level] += item.seconds; // Add the seconds directly
+                        groupedData[date][level] += item.seconds / 60 / 60; // Convert to hours
                     });
-                    
+
                     // First, let's sort the dates so the x-axis values are in order
                     const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(a) - new Date(b));
 
@@ -65,9 +64,7 @@
                         const y = [];
                         sortedDates.forEach(date => {
                             x.push(date);
-                            const totalSeconds = Object.values(groupedData[date]).reduce((a, b) => a + b, 0);
-                            const percentage = (groupedData[date][level] || 0) / totalSeconds * 100;
-                            y.push(percentage);
+                            y.push(groupedData[date][level] || 0); // Use the total minutes directly
                         });
                         traces.push({
                             x: x,
@@ -81,8 +78,12 @@
                     });
 
                     var layout = {
-                        title: 'Sleeplog Ranges By Date - 100 % Bar Chart',
-                        yaxis: { title: 'Percent of Total Sleep', ticksuffix: '%' },
+                        title: 'Sleeplog Ranges By Date - Absolute Bar Chart',
+                        yaxis: { 
+                            title: 'Hours of Sleep',
+                            dtick: 1,
+                            range: [0, 'auto'],
+                        },
                         xaxis: {
                             title: '',
                             type: 'date',
@@ -90,7 +91,21 @@
                             tickformat: "%Y-%m-%d", 
                             tickangle: -45
                         },
-                        barmode: 'stack'
+                        barmode: 'stack',
+                        shapes: [{
+                            type: 'line',
+                            xref: 'paper',  // Refers to the entire width of the chart
+                            yref: 'y',      // Refers to the y-axis
+                            x0: 0,          // Start at the left of the chart
+                            y0: 7,          // Position at 7 hours on the y-axis
+                            x1: 1,          // End at the right of the chart
+                            y1: 7,          // Position at 7 hours on the y-axis
+                            line: {
+                                color: 'black',
+                                width: 2,
+                                dash: 'dot'
+                            }
+                        }]
                     };
 
                     Plotly.newPlot('sleeplog_by_date_area', traces, layout);

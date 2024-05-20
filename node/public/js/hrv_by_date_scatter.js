@@ -35,7 +35,7 @@ function loadHrvByDateScatterData() {
 
       var layout = {
         title: {
-            text: "HRV By Date",
+            text: "HRV",
             x: 0.01, // Aligns the title to the left
             xanchor: 'left' // Anchors the title text to the left edge of its container
         },

@@ -47,7 +47,7 @@ function loadSpo2ByDateScatterData() {
 
       var layout = {
         title: {
-            text: "Spo2 By Date (PW2 > 2024-04-05)",
+            text: "Spo2",
             x: 0.01, // Aligns the title to the left
             xanchor: 'left' // Anchors the title text to the left edge of its container
         },
