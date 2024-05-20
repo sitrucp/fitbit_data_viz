@@ -10,7 +10,18 @@ Currently the visualizations interactive features only includes an option to man
 
 These visualizations augment what Fitbit provides in their app. Fitbit visualizations almost always contain only summarized data. For example, the app shows only a single average SpO2 value for a night's sleep. However, Fitbit devices actually record a lot of detailed data that you may never see on the Fitbit app. For example, SpO2, HRV and heart rate are recorded every at few seconds. The visualizations here use the detailed API data. It can be very informative to see actual heart rate measurements throughout the day, or to see all of the individual SpO2 measurements made throughout sleep sessions.
 
-![Heart rate scatter plot](images/hr_scatter_by_date.png)
+<strong>Home page</strong>
+
+![Home page screenshot](images/home_page.png)
+
+<strong>Sleep page screenshot</strong>
+
+![Sleep page screenshot](images/sleep_page.png)
+
+<strong>Today page screenshot</strong>
+
+![Today page screenshot](images/today_page.png)
+
 
 ## Technical features:
 
