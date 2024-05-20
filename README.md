@@ -28,7 +28,7 @@ These visualizations augment what Fitbit provides in their app. Fitbit visualiza
 * PyCherry used to pop Fitbit authentication login browser window.
 * Fitbit authentication token is saved locally as json file (*auth_tokens.json*). 
 * Uses refresh token to get new tokens automatically.
-* Response log (*response_log.json*) records the last response dates for each API endpoints. 
+* Response log (*response_log.json*) records the last API call response date for each API endpoints.
 * Activity log (*activity_log.json*) records retrieval activity including response errors and messages.
 
 ## Usage:
@@ -50,11 +50,15 @@ config_fitbit = {
 
 * Run *auth_get_tokens.py* to authenticate in pop-up browser on Fitbit login. This will save a file *auth_tokens.json* that contains tokens for subsequent authentication. You only have to run this once to get the token file. Subsequently, the ETL code includes a built-in process to use the refresh token to get new tokens if they are expired.
 
-* Run the ETL Python process to get Fitbit data by running: *python -m etl.get_all_data*. Do this daily or whenever you want to get data.
+* Run the Python ETL process to get Fitbit data by either:
 
-It is recommended to start off by downloading a small of amount of data, say the last two days' data due to API rate limiting. To do this, modify *response_log.json* date field values for all endpoints to a date two days ago. When you run get_all_data it will use these dates for date range. Afterwards you can get additional day's data but note that the API rate limits makes historical data retrieval take a while as the code pauses for rate limit time-outs.
+1) Modify *response_log.json* date field values for all endpoints to a date two days ago. When you run get_all_data it will use these dates for date range. It is recommended to start off by downloading a small of amount of data, say the last two days' data due to API rate limiting. The reason is that the API rate limits makes historical data retrieval take a while as the code pauses for rate limit time-outs.
 
-* Browse to *http://localhost:3000/* and view reports.
+2) Click Run Python Script button on Home page (requires Node server.js file is running).
+
+3) Manually run:  *python -m etl.get_all_data*. Do this daily or whenever you want to get data.
+
+4) Browse to *http://localhost:3000/* and view reports.
 
 ## Endpoint data retrieved from API:
 
