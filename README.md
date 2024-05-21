@@ -14,7 +14,7 @@ Fitbit visualizations almost always contain only summarized data. For example, t
 
 However, Fitbit devices actually record a lot of detailed data that you may never see on the Fitbit app. 
 
-For example, SpO2, HRV and heart rate are recorded every at few seconds. The visualizations here use the detailed API data. 
+For example, SpO2, HRV and heart rate are recorded every few seconds. The visualizations here use the detailed API data. 
 
 It can be very informative to see actual heart rate measurements throughout the day, or to see all of the individual SpO2 measurements made throughout sleep sessions.
 
@@ -49,26 +49,30 @@ This app includes the visualizations listed in the home page menu screenshot bel
 
 * Node server needs to be started manually: *Node server.js*
 
-* Configure MongoDB database connection in the *insert* modules.
+* Configure MongoDB database connection in the *db_connection.py* file.
 
-* Create credentials file to contain CLIENT_ID and CLIENT_SECRET and then create an environment variable named "key_file" so it can be called in the code. Format as below:
+* Create a credentials file outside of the project to contain CLIENT_ID and CLIENT_SECRET and then create an environment variable named "key_file" so it can be called in the code. Format as below:
 
 config_fitbit = {
     'CLIENT_ID': 'xxx',
     'CLIENT_SECRET': 'xxx'
     }
 
-* Run *auth_get_tokens.py* to authenticate in pop-up browser on Fitbit login. This will save a file *auth_tokens.json* that contains tokens for subsequent authentication. You only have to run this once to get the token file. Subsequently, the ETL code includes a built-in process to use the refresh token to get new tokens if they are expired.
+* Run *auth_get_tokens.py* to authenticate in pop-up browser on Fitbit login. This will save a file *auth_tokens.json* that contains tokens for subsequent authentication. You only have to run this once to get the token file. The *access_token* has an 8 hour lifetime while the *refresh_token* is valid until its first use. Subsequently, the *get_response.py* file includes a process to use the *refresh_token* to get a new *access_token* and new *refresh_token* automatically.
 
-* Run the Python ETL process to get Fitbit data by either:
+* Modify the *response_log.json* file date field values for all endpoints to a date two days ago. Date format is YYYY-MM-DD. 
 
-1) Modify *response_log.json* date field values for all endpoints to a date two days ago. When you run get_all_data it will use these dates for date range. It is recommended to start off by downloading a small of amount of data, say the last two days' data due to API rate limiting. The reason is that the API rate limits makes historical data retrieval take a while as the code pauses for rate limit time-outs.
+* Start the Node server by running *server.js*.
 
-2) Click Run Python Script button on Home page (requires Node server.js file is running).
+* Get data from the Fitbit API. Do this daily or whenever you want to get data. You can use either method below. When you run *get_all_data.py* it will use the *response_log.json* dates for date range to retrieve. It is recommended to start off by downloading a small of amount of data, say the last two days' data due to API rate limiting. The API has rate limits that make getting historical data take a while as the code pauses for rate limit time-outs. You could let *get_all_data.py* run and it will iteratively pause during timeouts and continue downloading until the next timeout.
 
-3) Manually run:  *python -m etl.get_all_data*. Do this daily or whenever you want to get data.
+To run *get_all_data.py*:
 
-4) Browse to *http://localhost:3000/* and view reports.
+1) Click *Run Python Script* button on the Home page (requires Node server.js file is running). This will use Javascript and Node to run the *get_all_data.py* module.
+
+2) Manually run the *get_all_data.py* module on the command line: *python -m etl.get_all_data*
+
+* Browse to *http://localhost:3000/* and view the reports.
 
 ## Endpoint data retrieved from API:
 
@@ -97,5 +101,4 @@ config_fitbit = {
 * Get VO2 Max Summary by Interval (viz)
 * Get Temperature (Skin) Summary by Date (no viz yet)
 * Get Activity Intraday by Date - steps (no viz yet)
-
 
