@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fitbit Data Visualizations - Sleep Summary</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/scichart/index.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/pages.css"> 
+
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | <a href="index_today.html">Today</a> | Sleep</h2>
+    <div class="button-output-container">
+        <button onclick="runPython()">Run Python Script</button>
+        <pre id="output"></pre>
+      </div>
+    <script>
+        function runPython() {
+            const outputElement = document.getElementById('output');
+            fetch('/run-python').then(response => {
+                const reader = response.body.getReader();
+                function read() {
+                    return reader.read().then(({ done, value }) => {
+                        if (done) {
+                            console.log('Stream completed');
+                            return;
+                        }
+                        const string = new TextDecoder().decode(value);
+                        outputElement.textContent += string;
+                        read(); // Read the next chunk of data
+                    });
+                }
+                read();
+            }).catch(error => console.error('Error:', error));
+        }
+    </script>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="updateCharts()">Load Data</button>
+
+    <div id="sleeplog_by_date_bar" class="chart-container-hourly"></div>
+    <div id="hr_by_date" class="chart-container-hourly"></div>
+    <div id="spo2_by_date_scatter" class="chart-container-hourly"></div>
+    <div id="hrv_by_date_scatter" class="chart-container-hourly"></div>
+    <div id="spo2_by_date_bar" class="chart-container-date"></div>
+    <div id="br_by_date_scatter" class="chart-container-date"></div>
+    <div id="hrv_by_date_area" class="chart-container-date"></div>
+    
+    <script src="js/br_by_date.js"></script>
+    <script src="js/hr_by_date.js"></script>
+    <script src="js/hrv_by_date_area.js"></script>
+    <script src="js/hrv_by_date_scatter.js"></script>
+    <script src="js/spo2_by_date_bar.js"></script>
+    <script src="js/spo2_by_date_scatter.js"></script>
+    <script src="js/sleeplog_by_date_bar.js"></script>
+    <script src="js/update_charts.js"></script>
+</body>
+
+</html>

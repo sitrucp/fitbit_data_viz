@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sleeplog Stages By Date - Absolute Chart</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | Sleep Stages By Date - 100% Chart - <a href="page_sleeplog_by_date_stages_100pct.html">100% Chart</a></h2>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="loadData()">Load Data</button>
+
+    <div id="sleeplog_by_date_area" style="width:100%;height:600px;"></div>
+
+    <script>
+        window.onload = () => {
+            let endDate = new Date();
+            let startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            startDate.setDate(endDate.getDate() - 4400); // set start x days earlier than today
+            document.getElementById('start').valueAsDate = startDate;
+            document.getElementById('end').valueAsDate = endDate;
+            loadData();
+        };
+
+        function loadData() {
+            const startDate = document.getElementById('start').value;
+            const endDate = document.getElementById('end').value;
+
+            fetch(`http://localhost:3000/api/sleeplog?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const groupedData = {};
+                    data.forEach(item => {
+                        const date = (new Date(item.segment_start_time)).toISOString().split('T')[0];
+                        let level = item.level;
+                        if (level === 'wake') { // Standardize 'wake' to 'awake'
+                            level = 'awake';
+                        }
+                        if (!groupedData[date]) {
+                            groupedData[date] = {};
+                        }
+                        if (!groupedData[date][level]) {
+                            groupedData[date][level] = 0;
+                        }
+                        groupedData[date][level] += item.seconds / 60 / 60; // Convert to hours
+                    });
+
+                    // First, let's sort the dates so the x-axis values are in order
+                    const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(a) - new Date(b));
+
+                    const levelOrder = ['deep', 'light', 'rem', 'awake', 'short_wake', 'asleep', 'restless']; // Order of levels
+                    const traces = [];
+
+                    levelOrder.forEach(level => {
+                        const x = [];
+                        const y = [];
+                        sortedDates.forEach(date => {
+                            x.push(date);
+                            y.push(groupedData[date][level] || 0); // Use the total minutes directly
+                        });
+                        traces.push({
+                            x: x,
+                            y: y,
+                            type: 'bar',
+                            name: level,
+                            marker: {
+                                color: getStageColor(level)
+                            }
+                        });
+                    });
+
+                    var layout = {
+                        title: 'Sleeplog Ranges By Date - Absolute Bar Chart',
+                        yaxis: { 
+                            title: 'Hours of Sleep',
+                            dtick: 1,
+                            range: [0, 'auto'],
+                        },
+                        xaxis: {
+                            title: '',
+                            type: 'date',
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d", 
+                            tickangle: -45
+                        },
+                        barmode: 'stack',
+                        shapes: [{
+                            type: 'line',
+                            xref: 'paper',  // Refers to the entire width of the chart
+                            yref: 'y',      // Refers to the y-axis
+                            x0: 0,          // Start at the left of the chart
+                            y0: 7,          // Position at 7 hours on the y-axis
+                            x1: 1,          // End at the right of the chart
+                            y1: 7,          // Position at 7 hours on the y-axis
+                            line: {
+                                color: 'black',
+                                width: 2,
+                                dash: 'dot'
+                            }
+                        }]
+                    };
+
+                    Plotly.newPlot('sleeplog_by_date_area', traces, layout);
+                })
+                .catch(error => console.error('Error loading data:', error));
+        }
+
+        function getStageColor(stage) {
+            switch (stage) {
+                case 'deep': return '#333A73';
+                case 'light': return '#387ADF';
+                case 'rem': return '#50C4ED';
+                case 'short_wake': return '#FFDDE8';
+                case 'awake': return '#FF407D';
+                case 'restless': return '#C0C0C0';
+                case 'asleep': return '#808080';
+                default: return '#000000';
+            }
+        }
+    </script>
+</body>
+
+</html>

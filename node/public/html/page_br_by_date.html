@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Breathing Rate By Date Scatter</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | Breathing Rate By Date - Line Chart</h2>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="loadData()">Load Data</button>
+
+    <div id="br_by_date_scatter" style="width:100%;height:600px;"></div>
+
+    <script>
+        window.onload = () => {
+            // Set default dates
+            let endDate = new Date();
+            let startDate = new Date();
+            //startDate.setHours(0, 0, 0, 0);
+            //endDate.setHours(0, 0, 0, 0);
+            startDate.setDate(endDate.getDate() - 365); // set start x days earlier than today
+            document.getElementById('start').valueAsDate = startDate;
+            document.getElementById('end').valueAsDate = endDate;
+            loadData();  // Initial update to draw all charts based on the default selection
+        };
+
+        function loadData() {
+            const startDate = document.getElementById('start').value;
+            const endDate = document.getElementById('end').value;
+
+            fetch(`http://localhost:3000/api/br?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    //const dates = data.map(item => new Date(item.date));
+                    const dates = data.map(item => {
+                        // Append time part to ensure local midnight
+                        const localDate = new Date(item.date + 'T00:00:00'); 
+                        return localDate;
+                    });
+                    const fullSleepBr = data.map(item => item.fullSleepBr);
+                    const deepSleepBr = data.map(item => item.deepSleepBr);
+                    const lightSleepBr = data.map(item => item.lightSleepBr);
+                    const remSleepBr = data.map(item => item.remSleepBr);
+
+                    var traces = [{
+                        x: dates,
+                        y: fullSleepBr,
+                        mode: 'lines+markers',
+                        type: 'scatter',
+                        name: 'Full Sleep Breathing Rate',
+                        marker: {
+                            color: 'black'
+                        }
+                    }];
+
+                    var layout = {
+                        title: 'Breathing Rate By Date',
+                        xaxis: {
+                            title: '', 
+                            type: 'date',
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d", 
+                            tickangle: -45,
+                        },
+                        yaxis: {
+                            title: 'Breathing Rate',
+                            range: ['auto',]
+                        },
+                    };
+
+                    Plotly.newPlot('br_by_date_scatter', traces, layout);
+                })
+                .catch(error => console.error('Error loading data:', error));
+        }
+    </script>
+</body>
+
+</html>

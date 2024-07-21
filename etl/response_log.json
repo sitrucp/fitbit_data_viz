@@ -1,0 +1,93 @@
+{
+    "get_ep_activities_calories_intraday_by_date": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:47:50"
+        }
+    ],
+    "get_ep_activities_distance_intraday_by_date": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:47:53"
+        }
+    ],
+    "get_ep_activities_elevation_intraday_by_date": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:47:55"
+        }
+    ],
+    "get_ep_activities_floors_intraday_by_date": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:47:57"
+        }
+    ],
+    "get_ep_activities_steps_intraday_by_date": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:47:59"
+        }
+    ],
+    "get_ep_br_intraday_by_interval": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:48:04"
+        }
+    ],
+    "get_ep_ecg_intraday_by_date": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:48:01"
+        }
+    ],
+    "get_ep_hr_intraday_by_date": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:48:03"
+        }
+    ],
+    "get_ep_hrv_intraday_by_interval": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:48:04"
+        }
+    ],
+    "get_ep_sleeplog_by_interval": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:48:05"
+        }
+    ],
+    "get_ep_spo2_intraday_by_interval": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:48:06"
+        }
+    ],
+    "get_ep_tempskin_by_date": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:48:08"
+        }
+    ],
+    "get_ep_vo2max_intraday_by_interval": [
+        {
+            "date": "2024-07-21",
+            "status": "success",
+            "timestamp": "2024-07-21-11:48:07"
+        }
+    ]
+}

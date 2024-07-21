@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>HRV (RMSSD) Ranges By Date</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | HRV (RMSSD) Ranges By Date</h2>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="loadData()">Load Data</button>
+
+    <div id="hrv_by_date_area" style="width:100%;height:600px;"></div>
+
+    <script>
+        window.onload = () => {
+            // Set default dates
+            let endDate = new Date();
+            let startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            startDate.setDate(endDate.getDate() - 1600); // set start x days earlier than today
+            document.getElementById('start').valueAsDate = startDate;
+            document.getElementById('end').valueAsDate = endDate;
+            loadData();  // Initial update to draw all charts based on the default selection
+        };
+
+        function loadData() {
+            const startDate = document.getElementById('start').value;
+            const endDate = document.getElementById('end').value;
+
+            fetch(`http://localhost:3000/api/hrv?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Group and count by date and rmssdBinRange
+                    const groupedData = {};
+                    data.forEach(item => {
+                        const date = new Date(item.date).toISOString(); 
+                        const range = item.rmssdBinRange;
+                        if (!groupedData[date]) {
+                            groupedData[date] = {};
+                        }
+                        if (!groupedData[date][range]) {
+                            groupedData[date][range] = 0;
+                        }
+                        groupedData[date][range]++;
+                    });
+
+                    // Prepare to sort ranges
+                    const ranges = Array.from(new Set(data.map(item => item.rmssdBinRange)));
+
+                    // Custom sort function for ranges including '100+'
+                    ranges.sort((a, b) => {
+                        if (a === '100+') return 1; // Always place '100+' at the end
+                        if (b === '100+') return -1;
+                        return parseFloat(a) - parseFloat(b); // Numeric sort based on the first number
+                    });
+
+                    // Prepare traces for Plotly
+                    const traces = [];
+                    ranges.forEach(range => {
+                        const x = [];
+                        const y = [];
+                        for (const date in groupedData) {
+                            x.push(date);
+                            const total = Object.values(groupedData[date]).reduce((a, b) => a + b, 0);
+                            y.push((groupedData[date][range] || 0) / total * 100); // Convert count to percentage
+                        }
+                        traces.push({
+                            x: x,
+                            y: y,
+                            type: 'bar',
+                            name: range,
+                            stackgroup: 'one'
+                        });
+                    });
+
+                    var layout = {
+                        title: 'HRV (RMSSD) Ranges By Date',
+                        yaxis: { 
+                            title: 'Percent Total', 
+                            ticksuffix: '%' 
+                        },
+                        xaxis: {
+                            title: '',
+                            type: 'date',
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d %H", 
+                            tickangle: -45
+                        },
+                        barmode: 'stack'
+                    };
+
+                    Plotly.newPlot('hrv_by_date_area', traces, layout);
+                })
+                .catch(error => console.error('Error loading data:', error));
+        }
+    </script>
+</body>
+</html>

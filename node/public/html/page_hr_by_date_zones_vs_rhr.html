@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Heart Rate Analysis</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | Heart Rate Zones and Resting Heart Rate Analysis</h2>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="loadData()">Load Data</button>
+
+    <div id="hr_zones_and_resting_hr" style="width:100%;height:600px;"></div>
+
+    <script>
+        window.onload = () => {
+            // Set default dates
+            let endDate = new Date();
+            let startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            startDate.setDate(endDate.getDate() - 1000); // set start x days earlier than today
+            document.getElementById('start').valueAsDate = startDate;
+            document.getElementById('end').valueAsDate = endDate;
+            loadData(); // Initial update to draw all charts based on the default selection
+        };
+    
+        function loadData() {
+            const startDate = document.getElementById('start').value;
+            const endDate = document.getElementById('end').value;
+    
+            fetch(`http://localhost:3000/api/hr_zones?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const dates = Array.from(new Set(data.map(item => item.date))); // Get unique dates
+
+                    // Define the mega bin for >=120
+                    const megaBin = '>=120';
+                    const megaBinRanges = ['120-130', '130-140', '140-150', '150-160', '160-170', '170+'];
+                    const color = '#FF0000'; // Red for >=120
+
+                    // Calculate the percentage for the mega bin >=120
+                    const megaBinTrace = {
+                        x: dates, // X-axis: dates
+                        y: dates.map(date => { // Y-axis: percentage of total for each date
+                            const totalCount = data.filter(item => item.date === date).reduce((acc, cur) => acc + cur.count, 0); // Total count for the date
+                            const count = data.filter(item => item.date === date && megaBinRanges.includes(item.hrBinRange)).reduce((acc, cur) => acc + cur.count, 0); // Count for the current mega bin and date
+                            return totalCount ? parseFloat(((count / totalCount) * 100).toFixed(4)) : 0; // Percentage of total count
+                        }),
+                        type: 'bar',
+                        name: megaBin,
+                        marker: { color: color },
+                        hovertemplate: '%{x} %{hovertext} %{y:.2f}%', // Custom hover template
+                        hovertext: Array(dates.length).fill(megaBin),
+                        hoverlabel: { namelength: 0 },
+                    };
+
+                    // Add a trace for the resting heart rate
+                    const restingHrTrace = {
+                        x: dates,
+                        y: dates.map(date => {
+                            const restingHr = data.find(item => item.date === date);
+                            return restingHr ? restingHr.restingHeartRate : null;
+                        }),
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: 'Resting Heart Rate',
+                        yaxis: 'y2',
+                        line: { color: 'green' },
+                        marker: { color: 'green' }
+                    };
+
+                    const traces = [megaBinTrace, restingHrTrace];
+
+                    const layout = {
+                        title: 'Heart Rate Zones and Resting Heart Rate Analysis',
+                        yaxis: {
+                            title: 'Percent Total',
+                            ticksuffix: '%'
+                        },
+                        yaxis2: {
+                            title: 'Resting Heart Rate',
+                            overlaying: 'y',
+                            side: 'right'
+                        },
+                        xaxis: {
+                            title: '',
+                            type: 'date',
+                            tickfont: {
+                                size: 10
+                            },
+                            tickformat: "%Y-%m-%d",
+                            tickangle: -45
+                        },
+                        barmode: 'stack',
+                        bargap: 0,
+                    };
+    
+                    Plotly.newPlot('hr_zones_and_resting_hr', traces, layout);
+                })
+                .catch(error => console.error('Error loading data:', error));
+        }
+    </script>
+    
+</body>
+
+</html>

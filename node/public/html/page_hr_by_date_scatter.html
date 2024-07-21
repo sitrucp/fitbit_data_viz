@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Heart Rate By Date</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | Heart Rate By Date - Scatter Chart With Zone Colors</h2>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="loadData()">Load Data</button>
+
+    <div id="hr_by_date" style="width:100%;height:600px;"></div>
+
+    <script>
+
+        window.onload = () => {
+            // Set default dates
+            let endDate = new Date();
+            let startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            document.getElementById('start').valueAsDate = startDate;
+            document.getElementById('end').valueAsDate = endDate;
+            loadData();  // Initial update to draw all charts based on the default selection
+        };
+
+        function loadData() {
+            const startDate = document.getElementById('start').value;
+            const endDate = document.getElementById('end').value;
+
+            fetch(`http://localhost:3000/api/hr?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const dates = data.map(item => new Date(item.dateTime));
+                    const heartRates = data.map(item => item.heartRate);
+                    const restingHeartRates = data.map(item => item.restingHeartRate);
+                   
+                    // Calculate maximum and minimum values
+                    const maxHeartRate = parseFloat(Math.max(...heartRates).toFixed(1));
+                    const minHeartRate = parseFloat(Math.min(...heartRates).toFixed(1));
+
+                    // Calculate average HR value
+                    const totalHr = heartRates.reduce((acc, value) => acc + value, 0);
+                    const avgHr = parseFloat((totalHr / heartRates.length).toFixed(1));
+
+                    // Calculate zone thresholds based on Max heart rate 162 bpm & Fitbit methodology
+                    const zone1UpperLimit = 96; // Normal
+                    const zone2UpperLimit = 118; // Fat Burn
+                    const zone3UpperLimit = 145; // Cardio
+                    const zone4UpperLimit = 162; // Peak
+
+                    //console.log('zone1UpperLimit Normal', zone1UpperLimit, 'zone2UpperLimit Fat Burn',zone2UpperLimit,'zone3UpperLimit Cardio', zone3UpperLimit,'zone4UpperLimit Peak',zone4UpperLimit);
+
+                    // Calculate colors for each heart rate based on dynamically calculated zones
+                    const heartRateColors = heartRates.map(rate => {
+                        if (rate < zone1UpperLimit) return 'rgb(0, 128, 128)';      // Normal
+                        else if (rate < zone2UpperLimit) return 'rgb(252, 191, 73)'; // Fat Burn
+                        else if (rate < zone3UpperLimit) return 'rgb(247, 127, 0)';   // Cardio
+                        else return 'rgb(214, 40, 40)';                             // Peak
+                    });
+
+                    var trace1 = {
+                        x: dates,
+                        y: heartRates,
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: 'Heart Rate',
+                        marker: { color: heartRateColors, size: 5 },
+                    };
+
+                    var trace2 = {
+                        x: dates,
+                        y: restingHeartRates,
+                        mode: "lines",
+                        type: "scatter",
+                        name: "Resting Heart Rate",
+                        line: {
+                            color: "rgba(255, 99, 132, 1)", // pink
+                            dash: "dash",
+                        },
+                    };
+
+                    var layout = {
+                        title: 'Heart Rate By Date',
+                        xaxis: {
+                            title: '', 
+                            type: 'date',
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d %H:%M", 
+                            tickangle: -45,
+                        },
+                        yaxis: {
+                            title: '', // Consider removing if not necessary
+                            range: ['auto', 'auto'],
+                            tick0: 30,  // This sets the starting tick at x
+                            dtick: 10,  // This sets the ticks to appear every x units
+                            tickfont: { size: 10 },
+                        },
+                        legend: {
+                            x: 1,
+                            xanchor: 'left',
+                            y: 1
+                        },
+                        annotations: [{
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: 1.05,
+                            yanchor: 'bottom',
+                            text: `Max HR: ${maxHeartRate} bpm`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: 1,
+                            yanchor: 'bottom',
+                            text: `Min HR: ${minHeartRate} bpm`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: .95,
+                            yanchor: 'bottom',
+                            text: `Avg HR: ${avgHr} bpm`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: .90,
+                            yanchor: 'bottom',
+                            text: `RHR: ${restingHeartRates[0]} bpm`,
+                            showarrow: false
+                        }],
+                        autosize: true
+                    };
+
+                    Plotly.newPlot('hr_by_date', [trace1, trace2], layout);
+                })
+                .catch(error => {
+                    console.error('Error loading data:', error);
+                    alert('An error occurred while loading the data. Please try again.');
+                });
+        }
+    </script>
+
+</body>
+
+</html>

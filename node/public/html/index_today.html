@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Fitbit Data Visualizations - Today</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"
+        integrity="sha256-QvgynZibb2U53SsVu98NggJXYqwRL7tg3FeyfXvPOUY=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/pages.css"> 
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | Today | <a href="index_sleep.html">Sleep</a></h2>
+    <div class="button-output-container">
+        <button onclick="runPython()">Run Python Script</button>
+        <pre id="output"></pre>
+      </div>
+    <script>
+        function runPython() {
+            const outputElement = document.getElementById('output');
+            fetch('/run-python').then(response => {
+                const reader = response.body.getReader();
+                function read() {
+                    return reader.read().then(({ done, value }) => {
+                        if (done) {
+                            console.log('Stream completed');
+                            return;
+                        }
+                        const string = new TextDecoder().decode(value);
+                        outputElement.textContent += string;
+                        read(); // Read the next chunk of data
+                    });
+                }
+                read();
+            }).catch(error => console.error('Error:', error));
+        }
+    </script>
+
+    <label for="start">Date:</label>
+    <input type="date" id="start">
+    <button id="loadDataButton">Load Data</button>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Heart Rate</H3>
+                <ul class="no-bullets">
+                    <li id="restingHeartRate"></li>
+                    <li id="dailyAverage"></li>
+                    <li id="dailyMax"></li>
+                    <li id="dailyMin"></li>
+                    <li id="avg90DayRHR"></li>
+                </ul>
+            </div>
+            <div id="heartRateViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Daily Steps</H3>
+                <ul class="no-bullets">
+                    <li id="totalSteps"></li>
+                    <li id="avgSDailySteps"></li>
+                </ul>
+            </div>
+            <div id="stepsViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Hourly Steps > 250 (24hrs)</H3>
+                <ul class="no-bullets">
+                    <li id="hours250Steps"></li>
+                    <li id="avgHours250Steps"></li>
+                </ul>
+            </div>
+            <div id="hours250StepsViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">VO2 Max</H3>
+                <ul class="no-bullets">
+                    <li id="vo2MaxHigh"></li>
+                    <li id="vo2MaxLow"></li>
+                </ul>
+            </div>
+            <div id="vo2maxViz" class="chart"></div>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Sleep Log</H3>
+                <ul class="no-bullets">
+                    <li id="sleepMinutesAwake"></li>
+                    <li id="sleepMinutesAsleep"></li>
+                    <li id="sleepStartTime"></li>
+                    <li id="sleepEndTime"></li>
+                    <li id="avg90DayMinutesAsleep"></li>
+                </ul>
+            </div>
+            <div id="sleeplogViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Sleep SpO2</H3>
+                <ul class="no-bullets">
+                    <li id="spo2Avg"></li>
+                    <li id="spo2High"></li>
+                    <li id="spo2Low"></li>
+                    <li id="avg90DaySpO2"></li>
+                </ul>
+            </div>
+            <div id="spo2Viz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Sleep HRV</H3>
+                <ul class="no-bullets">
+                    <li id="hrvAvg"></li>
+                    <li id="hrvHigh"></li>
+                    <li id="hrvLow"></li>
+                    <li id="avg90DayHRV"></li>
+                </ul>
+            </div>
+            <div id="hrvViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Sleep BR</H3>
+                <ul class="no-bullets">
+                    <li id="brFull"></li>
+                    <li id="brRem"></li>
+                    <li id="brDeep"></li>
+                    <li id="brLight"></li>
+                    <li id="avg90DayFullSleepBr"></li>
+                </ul>
+            </div>
+            <div id="brViz" class="chart"></div>
+        </div>
+    </div>
+
+    <script src="js/index_today.js"></script>
+</body>
+
+</html>

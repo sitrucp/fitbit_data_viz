@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>VO2 Max By Date Line</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | VO2 Max By Date - Line Chart</h2>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="loadData()">Load Data</button>
+
+    <div id="vo2max_by_date_line" style="width:100%;height:600px;"></div>
+
+    <script>
+        window.onload = () => {
+            // Set default dates
+            let endDate = new Date();
+            let startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            startDate.setDate(endDate.getDate()-2000);
+            document.getElementById('start').valueAsDate = startDate;
+            document.getElementById('end').valueAsDate = endDate;
+            loadData();  // Initial update to draw all charts based on the default selection
+        };
+
+        function loadData() {
+            const startDate = document.getElementById('start').value;
+            const endDate = document.getElementById('end').value;
+            
+            fetch(`http://localhost:3000/api/vo2max?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const dates = data.map(item => {
+                        // Append time part to ensure local midnight
+                        const localDate = new Date(item.date + 'T00:00:00'); 
+                        return localDate;
+                    });
+                    const vo2MaxHigh = data.map(item => item.vo2MaxHigh);
+                    const vo2MaxLow = data.map(item => item.vo2MaxLow);
+
+                    var traces = [{
+                        x: dates,
+                        y: vo2MaxHigh,
+                        mode: 'lines+markers',
+                        type: 'scatter',
+                        name: 'VO2 Max High',
+                        marker: {
+                            color: 'rgba(0, 128, 128, 0.7)',  // teal
+                        }
+                    },{
+                        x: dates,
+                        y: vo2MaxLow,
+                        mode: 'lines+markers',
+                        type: 'scatter',
+                        name: 'VO2 Max Low',
+                        marker: {
+                            color: 'rgba(247, 127, 0, 0.7)',  // Cardio orange
+                        }
+                    }];
+
+                    var layout = {
+                        title: 'VO2 Max By Date',
+                        xaxis: {
+                            title: 'Date',
+                            type: 'date',
+                            tickformat: "%Y-%m-%d",
+
+                            tickangle: -45
+                        },
+                        yaxis: {
+                            title: 'VO2 Max',
+                            range: [30, 'auto'],
+                            tick0: 30,  // This sets the starting tick at x
+                            dtick: 1,  // This sets the ticks to appear every x units
+                        },
+                    };
+
+                    Plotly.newPlot('vo2max_by_date_line', traces, layout);
+                })
+                .catch(error => console.error('Error loading data:', error));
+        }
+    </script>
+</body>
+
+</html>

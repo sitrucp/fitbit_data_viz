@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sleep By Date - Vertical Bar Chart</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | Sleep By Date - Vertical Bar Chart</h2>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="loadData()">Load Data</button>
+
+    <div id="sleeplog_by_date_bar" style="width:100%;height:600px;"></div>
+
+    <script>
+
+        window.onload = () => {
+            // Set default dates
+            let endDate = new Date();
+            let startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            document.getElementById('start').valueAsDate = startDate;
+            document.getElementById('end').valueAsDate = endDate;
+            loadData();  // Initial update to draw all charts based on the default selection
+        };
+
+        function loadData() {
+            const startDate = document.getElementById('start').value;
+            const endDate = document.getElementById('end').value;
+
+            fetch(`http://localhost:3000/api/sleeplog?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const datesStart = data.map(item => new Date(item.segment_start_time));
+                    const datesEnd = data.map(item => new Date(item.segment_end_time));
+                    const levels = data.map(item => item.level);
+
+                    // Apply level replacements and generate shapes
+                    const shapes = generateTimeBlocks(data.map(item => {
+                        item.level = getMappedLevel(item.level);
+                        return item;
+                    }));
+
+                    // Apply level replacements as per Python code before processing data
+                    data.forEach(item => {
+                        item.level = getMappedLevel(item.level);
+                    });
+
+                    var traces = [
+                        {
+                            x: [null],
+                            y: [null],
+                            mode: 'markers',
+                            marker: {
+                                opacity: 0
+                            }
+                        }
+                    ];
+
+                    var layout = {
+                        title: 'Sleep By Date - Vertical Bar Chart',
+                        xaxis: {
+                            title: '',
+                            type: 'date',
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d %H:%M",
+                            tickangle: -45,
+                        },
+                        yaxis: {
+                            title: 'Sleep Stage',
+                            range: [0, 1]
+                        },
+                        shapes: shapes,
+                        autosize: true
+                    };
+
+                    Plotly.newPlot('sleeplog_by_date_bar', [traces], layout);
+                })
+                .catch(error => console.error("Error loading data:", error));
+        }
+
+        function getMappedLevel(level) {
+            const levelReplacementMap = {
+                "awake": "wake",
+                "restless": "wake",
+                "unknown": "wake",
+                "asleep": "light"
+            };
+            return levelReplacementMap[level] || level;
+        }
+
+        // Function to generate shaded time blocks for the sleep stages
+        function generateTimeBlocks(data) {
+            return data.map(item => ({
+                type: 'rect',
+                x0: item.segment_start_time,
+                x1: item.segment_end_time,
+                y0: 0,
+                y1: 1,
+                fillcolor: getStageColor(item.level),
+                opacity: 1.0,
+                line: { width: 0 }
+            }));
+        }
+
+        // Helper function to assign colors to sleep stages
+        function getStageColor(stage) {
+            switch (stage) {
+                case 'deep': return '#333A73';
+                case 'light': return '#387ADF';
+                case 'rem': return '#50C4ED';
+                case 'wake': return '#FF407D';
+                case 'short_wake': return '#FFDDE8';
+                default: return '#000000';
+            }
+        }
+
+    </script>
+</body>
+
+</html>

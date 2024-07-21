@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Spo2 By Date Bar</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | Spo2 By Date - Measurement Counts Relative to 95%</h2>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="loadData()">Load Data</button>
+
+    <div id="spo2_by_date_bar" style="width:100%;height:600px;"></div>
+
+    <script>
+        window.onload = () => {
+            // Set default dates
+            let endDate = new Date();
+            let startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            startDate.setDate(endDate.getDate() - 120); // set start x days earlier than today
+            document.getElementById('start').valueAsDate = startDate;
+            document.getElementById('end').valueAsDate = endDate;
+            loadData();  // Initial update to draw all charts based on the default selection
+        };
+
+        function loadData() {
+            const startDate = document.getElementById('start').value;
+            const endDate = document.getElementById('end').value;
+
+            fetch(`http://localhost:3000/api/spo2?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const desiredMinimum = 95;
+                    let dailyData = {};
+
+                    // Organize data by date using the 'date' field directly
+                    data.forEach(item => {
+                        const dateStr = item.date; // Use the 'date' field directly
+                        if (!dailyData[dateStr]) {
+                            dailyData[dateStr] = { countAbove: 0, countBelow: 0, total: 0, dailyAverage: 0, dailyTotal: 0 };
+                        }
+                        if (item.spo2 >= desiredMinimum) {
+                            dailyData[dateStr].countAbove++;
+                        } else {
+                            dailyData[dateStr].countBelow++;
+                        }
+                        dailyData[dateStr].total++;
+                        dailyData[dateStr].dailyAverage += item.spo2;
+                        dailyData[dateStr].dailyTotal++;
+                    });
+
+                    // Prepare plot data
+                    const dates = [];
+                    const percentAbove = [];
+                    const percentBelow = [];
+                    const dailyAverages = [];
+
+                    Object.keys(dailyData).forEach(date => {
+                        const dayData = dailyData[date];
+                        // Correctly handle the date to ensure it reflects the local date without time zone offset
+                        const parts = date.split('-');
+                        const year = parseInt(parts[0], 10);
+                        const month = parseInt(parts[1], 10) - 1; // Months are zero-indexed
+                        const day = parseInt(parts[2], 10);
+                        dates.push(new Date(year, month, day));
+
+                        percentAbove.push(dayData.countAbove / dayData.total * 100);
+                        percentBelow.push(-dayData.countBelow / dayData.total * 100);
+                        dailyAverages.push(dayData.dailyAverage / dayData.dailyTotal);
+                    });
+
+                    // Calculate the regression line
+                    const regressionData = dailyAverages.map((avg, index) => ({
+                        x: index,
+                        y: avg
+                    }));
+                    const { slope, intercept } = linearRegression(regressionData);
+                    const trendLine = dates.map((date, index) => intercept + slope * index);
+
+                    var traces = [
+                        {
+                            x: dates,
+                            y: percentAbove,
+                            name: 'Above Desired Minimum',
+                            type: 'bar',
+                            marker: { 
+                                color: 'rgba(0, 128, 128, 0.7)',  // teal
+                             }
+                        },
+                        {
+                            x: dates,
+                            y: percentBelow,
+                            name: 'Below Desired Minimum',
+                            type: 'bar',
+                            marker: { 
+                                color: 'rgba(247, 127, 0, 0.7)',  // Cardio orange
+                             }
+                        },
+                        {
+                            x: dates,
+                            y: dailyAverages,
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            name: 'Daily Average',
+                            marker: { color: 'black' },
+                            yaxis: 'y2'
+                        },
+                        {
+                            x: dates,
+                            y: trendLine,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: 'Trend Line',
+                            line: { color: 'yellow', width: 2, dash: 'dash' },
+                            yaxis: 'y2'
+                        }
+                    ]
+
+                    var layout = {
+                        title: 'SpO2 Measurement Counts Relative to 95%',
+                        xaxis: {
+                            title: '',
+                            type: 'date',
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d",
+                            tickangle: -45,
+                        },
+                        yaxis: {
+                            title: 'SpO2 Relative to 95%',
+                            range: [-120, 120]
+                        },
+                        yaxis2: {
+                            title: 'Daily Average SpO2 Percent',
+                            overlaying: 'y',
+                            side: 'right',
+                            range: [90, 100]
+                        },
+                        barmode: 'relative'
+                    };
+
+                    Plotly.newPlot('spo2_by_date_bar', traces, layout);
+                })
+                .catch(error => console.error('Error loading data:', error));
+        }
+
+        // Simple linear regression calculation
+        function linearRegression(data) {
+            const n = data.length;
+            const sumX = data.reduce((acc, pair) => acc + pair.x, 0);
+            const sumY = data.reduce((acc, pair) => acc + pair.y, 0);
+            const sumXY = data.reduce((acc, pair) => acc + pair.x * pair.y, 0);
+            const sumXX = data.reduce((acc, pair) => acc + pair.x * pair.x, 0);
+            const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+
+            return { slope, intercept };
+        }
+    </script>
+
+</body>
+
+</html>

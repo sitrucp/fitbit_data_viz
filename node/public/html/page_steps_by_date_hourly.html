@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Steps By Date Bar</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | Steps By Date - Hourly Bar Chart</h2>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="loadData()">Load Data</button>
+
+    <div id="steps_by_date_bar" style="width:100%;height:600px;"></div>
+
+    <script>
+        window.onload = () => {
+            // Set default dates
+            let endDate = new Date();
+            let startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            startDate.setDate(endDate.getDate() - 30); // set start x days earlier than today
+            document.getElementById('start').valueAsDate = startDate;
+            document.getElementById('end').valueAsDate = endDate;
+            loadData();  // Initial update to draw all charts based on the default selection
+        };
+
+        function loadData() {
+            const startDate = document.getElementById('start').value;
+            const endDate = document.getElementById('end').value;
+
+            // Fetch data from your API
+            fetch(`http://localhost:3000/api/steps_hourly?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const dates = data.map(item => new Date(item.dateTime));
+                    const steps = data.map(item => item.steps === 0 ? null : item.steps);
+                    const cumulativeSteps = data.map(item => item.cumulativeSteps === 0 ? null : item.cumulativeSteps);
+
+                    // Prepare traces for the Plotly chart
+                    const traces = [
+                        {
+                            x: dates,
+                            y: steps,
+                            type: 'bar',
+                            name: 'Hourly Steps',
+                            marker: {
+                                color: 'rgba(0, 128, 128, 0.7)',  // teal
+                            },
+                            width: 3600000 * 0.9 // 90% of an hour in milliseconds
+                        },
+                        {
+                            x: dates,
+                            y: cumulativeSteps,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: 'Cumulative Steps',
+                            line: {
+                                color: 'rgba(169, 169, 169, 0.5)'  // Orange for cumulative steps #FCBF49
+                            }
+                        },
+                        {
+                            x: [null], // No actual data points
+                            y: [null],
+                            mode: "lines",
+                            type: "scatter",
+                            name: "10k Daily Goal",
+                            line: {
+                                color: 'rgba(255, 99, 132, 1)', // pink
+                                dash: 'dashdot',
+                            },
+                            showlegend: true,
+                        },
+                    ];
+                    const layout = {
+                        title: 'Steps By Date',
+                        xaxis: {
+                            title: '',
+                            type: 'date',
+                            tickformat: '%Y-%m-%d %H',
+                            tickangle: -45,
+                        },
+                        yaxis: {
+                            title: 'Steps'
+                        },
+                        legend: {
+                            x: 1,
+                            xanchor: 'left',
+                            y: 1
+                        },
+                        shapes: [
+                            {
+                                type: 'line',
+                                xref: 'paper',
+                                x0: 0,
+                                y0: 10000,
+                                x1: 1,
+                                y1: 10000,
+                                line: {
+                                    color: '#FF5151',
+                                    width: 2,
+                                    dash: 'dashdot'
+                                }
+                            }
+                        ]
+                    };
+
+                    Plotly.newPlot('steps_by_date_bar', traces, layout);
+                })
+                .catch(error => console.error('Error loading data:', error));
+        }
+
+    </script>
+</body>
+
+</html>>

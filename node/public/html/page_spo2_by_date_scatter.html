@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>SpO2 By Date Scatter</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | SpO2 By Datetime</h2>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="loadData()">Load Data</button>
+
+    <div id="spo2_by_date_scatter" style="width:100%;height:600px;"></div>
+
+    <script>
+        window.onload = () => {
+            // Set default dates
+            let endDate = new Date();
+            let startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            document.getElementById('start').valueAsDate = startDate;
+            document.getElementById('end').valueAsDate = endDate;
+            loadData();  // Initial update to draw all charts based on the default selection
+        };
+
+        function loadData() {
+            const startDate = document.getElementById('start').value;
+            const endDate = document.getElementById('end').value;
+
+            fetch(`http://localhost:3000/api/spo2?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const dates = data.map(item => new Date(item.dateTime));
+                    const spo2 = data.map(item => item.spo2);
+                    const dailyAvg = data.map(item => item.dailyAvg);
+
+                    // Calculate maximum and minimum values
+                    const maxSpo2 = parseFloat(Math.max(...spo2).toFixed(1));
+                    const minSpo2 = parseFloat(Math.min(...spo2).toFixed(1));
+
+                    // Calculate average SpO2 value
+                    const totalSpo2 = spo2.reduce((acc, value) => acc + value, 0);
+                    const avgSpo2 = parseFloat((totalSpo2 / spo2.length).toFixed(1));
+
+                    var traces = [
+                        {
+                            x: dates,
+                            y: spo2,
+                            mode: 'markers',
+                            type: 'scatter',
+                            name: 'SpO2',
+                            marker: {
+                                color: 'black',
+                                size: 5
+                            }
+                        },
+                        {
+                            x: dates,
+                            y: dailyAvg,
+                            mode: 'lines',
+                            type: 'scatter',
+                            name: 'Daily Average',
+                            line: {
+                                color: "rgba(255, 99, 132, 1)", // pink
+                                dash: "dash",
+                            },
+                        },
+                        {
+                            x: [null], // No actual data points
+                            y: [null],
+                            mode: "lines",
+                            type: "scatter",
+                            name: "SpO2 95% Goal",
+                            line: {
+                                color: 'rgba(255, 99, 132, 1)', // pink
+                                dash: 'dashdot',
+                            },
+                            showlegend: true,
+                        },
+                    ];
+
+                    var layout = {
+                        title: 'SpO2 By Datetime',
+                        xaxis: {
+                            title: '',
+                            type: 'date',
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d %H:%M",
+                            tickangle: -45,
+                        },
+                        yaxis: {
+                            title: '',
+                            range: ['auto', 'auto']
+                        },
+                        legend: {
+                            x: 1,
+                            xanchor: 'left',
+                            y: 1
+                        },
+                        autosize: true,
+                        shapes: [
+                            {
+                                name: "SpO2 95% Goal",
+                                type: "line",
+                                x0: dates[0],
+                                x1: dates[dates.length - 1],
+                                y0: 95,
+                                y1: 95,
+                                line: {
+                                    color: 'rgba(255, 99, 132, 1)', // pink
+                                    dash: 'dashdot',
+                                },
+                            },
+                        ],
+                        annotations: [{
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: 1.05,
+                            yanchor: 'bottom',
+                            text: `Max SpO2: ${maxSpo2} bpm`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: 1,
+                            yanchor: 'bottom',
+                            text: `Min SpO2: ${minSpo2} bpm`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.95,
+                            xanchor: 'right',
+                            y: .95,
+                            yanchor: 'bottom',
+                            text: `Avg SpO2: ${avgSpo2} bpm`,
+                            showarrow: false
+                        }],
+                    };
+
+                    Plotly.newPlot('spo2_by_date_scatter', traces, layout);
+                })
+                .catch(error => console.error('Error loading data:', error));
+        }
+    </script>
+</body>
+
+</html>

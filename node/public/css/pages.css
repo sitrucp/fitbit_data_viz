@@ -1,0 +1,79 @@
+.button-output-container {
+    display: flex;
+    /* Make the container a flexbox */
+    align-items: center;
+    /* Align elements vertically */
+}
+
+.button-output-container button {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.chart-container-hourly {
+    width: 99%;
+    height: 190px;
+    padding: 0;
+    margin: 10px;
+    border: 1px solid black;
+}
+
+.chart-container-date {
+    width: 99%;
+    height: 200px;
+    padding: 0;
+    margin: 10px;
+    border: 1px solid black;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    padding: 5px;
+}
+
+.grid-item {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 0px;
+    padding-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 280px;
+    /* Adjust as needed */
+}
+
+.content {
+    flex-grow: 1;
+    font-size: 14px;
+}
+
+.chart {
+    height: 150px;
+    /* Adjust as needed */
+}
+
+@media (max-width: 600px) {
+    .grid-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+ul.no-bullets {
+    margin-top: 10px;
+    list-style-type: none;
+    /* Removes bullets */
+    padding-left: 0;
+    /* Removes indentation */
+}
+
+.grid-h3 {
+    margin-top: 5px;
+    /* Adjust as needed */
+    margin-bottom: 0px;
+    /* Adjust as needed */
+}
