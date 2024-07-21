@@ -14,9 +14,11 @@ Data transformation occurs in several places:
 
 This project was created to augment and extend the data and visualizations that are available in the Fitbit app and dashboard. Fitbit devices actually record a lot of detailed data that you may never see on the Fitbit app. 
 
-Fitbit visualizations almost always contain only summarized data. For example, while the Fitbit app shows only a single average SpO2 value for a night's sleep, sleep SpO2, HRV and heart rate are recorded every few seconds.  
+Fitbit visualizations almost always contain only summarized data. However, while the Fitbit app shows only a single average value for a night's sleep, sleep SpO2, HRV and heart rate, they are recorded every few seconds.
 
-This second level detailed data can be very informative. For example, individual second level heart rate measurements throughout the day, or SpO2 measurements made throughout sleep sessions can be presented as scatter charts, histograms, distribution plots (eg box or violin), or binned into ranges.
+This second level detailed data can be very informative. For example, individual second level heart rate measurements throughout the day, or SpO2 measurements made throughout sleep sessions can be presented as scatter charts, histograms, distribution plots (eg box or violin), or binned into ranges. Averages can hide informative detail.
+
+# Content Available
 
 The interactive web pages include:
 
@@ -24,7 +26,7 @@ The interactive web pages include:
 2) Sleep page - web page that shows detailed sleep activity.
 3) Home page - web page listing links to many other visualization pages (see screenshot and notes below for what is available).
 
-# Screenshots
+# Example Screenshots
 
 ## Home page screenshot
 
@@ -50,7 +52,7 @@ The interactive web pages include:
 
 <img src="images/home_hrv_by_datetime_scatter.png" alt="Home | HRV By Datetime - Scatter Chart screenshot" width="400">
 
-## Technical features:
+## Technical Features:
 
 * PyCherry used to pop Fitbit authentication login browser window.
 * Fitbit authentication token is saved locally as json file (*auth_tokens.json*). 
@@ -93,7 +95,7 @@ To run *get_all_data.py*:
 
 * Browse to *http://localhost:3000/* and view the reports.
 
-## Endpoint data retrieved from API:
+## Fitbit Web API Data Retrieved:
 
 * Get Activity Intraday by Date - calories
 * Get Activity Intraday by Date - distance
@@ -109,7 +111,7 @@ To run *get_all_data.py*:
 * Get Temperature (Skin) Summary by Date
 * Get VO2 Max Summary by Interval
 
-## JSON responses inserted into MongoDB and visualized:
+## Fitbit Web API Data Used:
 
 * Get Heart Rate Intraday by Date (viz) 
 * Get Breathing Rate Intraday by Interval (viz)
@@ -121,7 +123,7 @@ To run *get_all_data.py*:
 * Get Temperature (Skin) Summary by Date (no viz yet)
 * Get Activity Intraday by Date - steps (no viz yet)
 
-## Home page visualization links available:
+## Home Page Content Links Available:
 
 * Heart Rate By Datetime - Scatter Chart
 * Heart Rate Ranges By Date - Bar Chart
