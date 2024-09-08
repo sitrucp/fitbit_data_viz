@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <h2><a href="index.html">Home</a> | Sleep Stages By Date - 100% Chart - <a href="page_sleeplog_by_date_stages_100pct.html">100% Chart</a></h2>
+    <h2><a href="index.html">Home</a> | Sleep Stages By Date - 100% Chart - <a href="page_sleeplog_by_date_stages_100pct.html">100% Chart</a> | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a></h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -57,7 +57,7 @@
                     // First, let's sort the dates so the x-axis values are in order
                     const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(a) - new Date(b));
 
-                    const levelOrder = ['deep', 'light', 'rem', 'awake', 'short_wake', 'asleep', 'restless']; // Order of levels
+                    const levelOrder = ['deep', 'light', 'rem', 'short_wake', 'awake', 'asleep', 'restless']; // Order of levels
                     const traces = [];
 
                     levelOrder.forEach(level => {

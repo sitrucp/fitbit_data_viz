@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <h2><a href="index.html">Home</a> | Heart Rate By Date - Scatter Chart With Zone Colors</h2>
+    <h2><a href="index.html">Home</a> | Heart Rate By Date - Scatter Chart With Zone Colors | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a></h2>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">
@@ -42,6 +42,8 @@
                     const dates = data.map(item => new Date(item.dateTime));
                     const heartRates = data.map(item => item.heartRate);
                     const restingHeartRates = data.map(item => item.restingHeartRate);
+
+                    console.log('heartRates:', heartRates);
                    
                     // Calculate maximum and minimum values
                     const maxHeartRate = parseFloat(Math.max(...heartRates).toFixed(1));

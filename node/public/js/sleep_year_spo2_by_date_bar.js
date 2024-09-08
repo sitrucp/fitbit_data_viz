@@ -2,20 +2,20 @@
 let isFirstLoadSpO2 = true;
 
 function loadSpo2ByDateBarData() {
-  let startDate, endDate;
-  if (isFirstLoadSpO2) {
-    // Default dates for the first load
-    endDate = new Date();
-    startDate = new Date();
-    startDate.setDate(startDate.getDate() - 365); // Set start x days earlier than today
-    startDate = startDate.toISOString().split("T")[0];
-    endDate = endDate.toISOString().split("T")[0];
-    isFirstLoadSpO2 = false;
-  } else {
-    // Get dates from the input fields after the first load
-    startDate = document.getElementById("start").value;
-    endDate = document.getElementById("end").value;
-  }
+    let startDate, endDate;
+    
+    if (isFirstLoadSpO2) {
+        // Default date for the first load
+        endDate = new Date(); // Today
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 365); // Set start 365 days earlier than today
+        isFirstLoadSpO2 = false;
+    } else {
+        // Get date from the input field after the first load
+        endDate = new Date(document.getElementById("start").value);
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 365); // Set start 365 days earlier than selected date
+    }
 
   fetch(`http://localhost:3000/api/spo2?start=${startDate}&end=${endDate}`)
     .then((response) => response.json())
@@ -44,7 +44,7 @@ function loadSpo2ByDateBarData() {
         dailyData[dateStr].dailyAverage += item.spo2;
         dailyData[dateStr].dailyTotal++;
       });
-      console.log(dailyData);
+      
       // Prepare plot data
       const dates = [];
       const percentAbove = [];
@@ -140,7 +140,7 @@ function loadSpo2ByDateBarData() {
         autosize: true,
       };
 
-      Plotly.newPlot("spo2_by_date_bar", traces, layout);
+      Plotly.newPlot("sleep_year_spo2_by_date_bar", traces, layout);
     })
     .catch((error) => console.error("Error loading data:", error));
 }

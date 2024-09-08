@@ -5,10 +5,7 @@
     <meta charset="UTF-8">
     <title>Fitbit Data Visualizations - Sleep Summary</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/scichart/index.min.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="css/pages.css"> 
-
 </head>
 
 <body>
@@ -38,28 +35,27 @@
         }
     </script>
 
-    <label for="start">Start Date:</label>
+    <label for="start">Date:</label>
     <input type="date" id="start">
-    <label for="end">End Date:</label>
-    <input type="date" id="end">
     <button onclick="updateCharts()">Load Data</button>
 
-    <div id="sleeplog_by_date_bar" class="chart-container-hourly"></div>
-    <div id="hr_by_date" class="chart-container-hourly"></div>
-    <div id="spo2_by_date_scatter" class="chart-container-hourly"></div>
-    <div id="hrv_by_date_scatter" class="chart-container-hourly"></div>
-    <div id="spo2_by_date_bar" class="chart-container-date"></div>
-    <div id="br_by_date_scatter" class="chart-container-date"></div>
-    <div id="hrv_by_date_area" class="chart-container-date"></div>
+    <div id="sleep_today_sleeplog_by_date_bar" class="chart-container-hourly"></div>
+    <div id="sleep_today_hr_by_date_scatter" class="chart-container-hourly"></div>
+    <div id="sleep_today_spo2_by_date_scatter" class="chart-container-hourly"></div>
+    <div id="sleep_today_hrv_by_date_scatter" class="chart-container-hourly"></div>
+    <div id="sleep_year_spo2_by_date_bar" class="chart-container-date"></div>
+    <div id="sleep_year_br_by_date_scatter" class="chart-container-date"></div>
+    <div id="sleep_year_hrv_by_date_area" class="chart-container-date"></div>
     
-    <script src="js/br_by_date.js"></script>
-    <script src="js/hr_by_date.js"></script>
-    <script src="js/hrv_by_date_area.js"></script>
-    <script src="js/hrv_by_date_scatter.js"></script>
-    <script src="js/spo2_by_date_bar.js"></script>
-    <script src="js/spo2_by_date_scatter.js"></script>
-    <script src="js/sleeplog_by_date_bar.js"></script>
-    <script src="js/update_charts.js"></script>
+    <script src="js/sleep_global_vars.js"></script>
+    <script src="js/sleep_today_sleeplog_by_date_bar.js"></script>
+    <script src="js/sleep_today_hr_by_date_scatter.js"></script>
+    <script src="js/sleep_today_spo2_by_date_scatter.js"></script>
+    <script src="js/sleep_today_hrv_by_date_scatter.js"></script>
+    <script src="js/sleep_year_spo2_by_date_bar.js"></script>
+    <script src="js/sleep_year_br_by_date_scatter.js"></script>
+    <script src="js/sleep_year_hrv_by_date_area.js"></script>
+    <script src="js/sleep_update_charts.js"></script>
 </body>
 
 </html>

@@ -2,20 +2,20 @@
 let isFirstLoadHRV = true;
 
 function loadHrvByDateAreaData() {
-  let startDate, endDate;
-  if (isFirstLoadHRV) {
-    // Default dates for the first load
-    endDate = new Date();
-    startDate = new Date();
-    startDate.setDate(startDate.getDate() - 365); // Set start x days earlier than today
-    startDate = startDate.toISOString().split("T")[0];
-    endDate = endDate.toISOString().split("T")[0];
-    isFirstLoadHRV = false;
-  } else {
-    // Get dates from the input fields after the first load
-    startDate = document.getElementById("start").value;
-    endDate = document.getElementById("end").value;
-  }
+    let startDate, endDate;
+    
+    if (isFirstLoadHRV) {
+        // Default date for the first load
+        endDate = new Date(); // Today
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 365); // Set start 365 days earlier than today
+        isFirstLoadHRV = false;
+    } else {
+        // Get date from the input field after the first load
+        endDate = new Date(document.getElementById("start").value);
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 365); // Set start 365 days earlier than selected date
+    }
 
   fetch(`http://localhost:3000/api/hrv?start=${startDate}&end=${endDate}`)
     .then((response) => response.json())
@@ -106,7 +106,7 @@ function loadHrvByDateAreaData() {
         autosize: true,
       };
 
-      Plotly.newPlot("hrv_by_date_area", traces, layout);
+      Plotly.newPlot("sleep_year_hrv_by_date_area", traces, layout);
     })
     .catch((error) => console.error("Error loading data:", error));
 }

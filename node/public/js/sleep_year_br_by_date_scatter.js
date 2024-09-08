@@ -3,18 +3,18 @@ let isFirstLoadBR = true;
 
 function loadBrByDateScatterData() {
     let startDate, endDate;
+    
     if (isFirstLoadBR) {
-        // Default dates for the first load
-        endDate = new Date();
-        startDate = new Date();
-        startDate.setDate(startDate.getDate() - 365); // Set start x days earlier than today
-        startDate = startDate.toISOString().split('T')[0];
-        endDate = endDate.toISOString().split('T')[0];
+        // Default date for the first load
+        endDate = new Date(); // Today
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 365); // Set start 365 days earlier than today
         isFirstLoadBR = false;
     } else {
-        // Get dates from the input fields after the first load
-        startDate = document.getElementById("start").value;
-        endDate = document.getElementById("end").value;
+        // Get date from the input field after the first load
+        endDate = new Date(document.getElementById("start").value);
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 365); // Set start 365 days earlier than selected date
     }
 
     fetch(`http://localhost:3000/api/br?start=${startDate}&end=${endDate}`)
@@ -31,6 +31,10 @@ function loadBrByDateScatterData() {
                 return new Date(parts[0], parts[1] - 1, parts[2]);
             });
 
+            const maxBr = Math.max(...fullSleepBr);
+            const minBr = Math.min(...fullSleepBr);
+            const avgBr = (fullSleepBr.reduce((a, b) => a + b, 0) / fullSleepBr.length).toFixed(1);
+
             var traces = [
                 {
                   x: dates,
@@ -44,7 +48,8 @@ function loadBrByDateScatterData() {
         
               var layout = {
                 title: {
-                    text: "Breathing Rate",
+                    //text: "Breathing Rate",
+                    text: `Breathing Rate (Avg: ${avgBr} bpm, Max: ${maxBr} bpm, Min: ${minBr} bpm)`,
                     x: 0.01, // Aligns the title to the left
                     xanchor: 'left' // Anchors the title text to the left edge of its container
                 },
@@ -78,7 +83,7 @@ function loadBrByDateScatterData() {
                 autosize: true,
               };
 
-            Plotly.newPlot('br_by_date_scatter', traces, layout);
+            Plotly.newPlot('sleep_year_br_by_date_scatter', traces, layout);
         })
         .catch(error => console.error('Error loading data:', error));
 }
