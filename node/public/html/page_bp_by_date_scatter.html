@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Blood Pressure By Date - Detailed</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/pages.css">
+    <link rel="shortcut icon" href="../favicons/favicon.ico">
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | Blood Pressure By Date - Scatter Plot | <a href="index_today.html">Today</a> | <a
+            href="index_sleep.html">Sleep</a></h2>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="changeDateRange(-1)">&#x2212;</button>
+    <button onclick="changeDateRange(1)">&#x2b;</button>
+    <button onclick="loadData()">Load Data</button>
+
+    <label for="armFilter">Arm:</label>
+    <select id="armFilter" onchange="loadData()">
+        <option value="both">Both</option>
+        <option value="left">Left</option>
+        <option value="right">Right</option>
+    </select>
+
+    <div id="bp_by_date_chart" style="width:100%;height:600px;"></div>
+
+    <script>
+        window.onload = () => {
+            // Set default dates
+            let endDate = new Date();
+            let startDate = new Date();
+            startDate.setDate(endDate.getDate() - 2000); // set start xx days earlier than today
+            document.getElementById('start').valueAsDate = startDate;
+            document.getElementById('end').valueAsDate = endDate;
+            loadData(); // Initial update to draw chart based on the default selection
+        };
+
+        function loadData() {
+            const startDate = document.getElementById('start').value;
+            const endDate = document.getElementById('end').value;
+            const armFilter = document.getElementById('armFilter').value;
+
+            fetch(`http://localhost:3000/api/bp_detail?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Filter by arm if not 'both'
+                    let filteredData = data;
+                    if (armFilter !== 'both') {
+                        filteredData = data.filter(item => {
+                            if (!item.arm) return false;
+                            return item.arm.trim().toLowerCase() === armFilter;
+                        });
+                    }
+                    // Debug: log data and filteredData
+                    console.log('All data:', data);
+                    console.log('Filtered data:', filteredData);
+
+                    const systolicDates = filteredData.map(item => new Date(item.date + 'T00:00:00'));
+                    const diastolicDates = filteredData.map(item => new Date(item.date + 'T00:00:00'));
+                    const systolicValues = filteredData.map(item => item.systolic);
+                    const diastolicValues = filteredData.map(item => item.diastolic);
+
+                    // Systolic trace
+                    var systolicTrace = {
+                        x: systolicDates,
+                        y: systolicValues,
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: 'Systolic',
+                        marker: {
+                            color: '#ff4d4d' // Red color
+                        }
+                    };
+
+                    // Diastolic trace
+                    var diastolicTrace = {
+                        x: diastolicDates,
+                        y: diastolicValues,
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: 'Diastolic',
+                        marker: {
+                            color: '#4d79ff' // Blue color
+                        }
+                    };
+
+                    var traces = [systolicTrace, diastolicTrace];
+
+                    var layout = {
+                        title: 'Blood Pressure By Date - Detail',
+                        xaxis: {
+                            title: '',
+                            type: 'date',
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d",
+                            tickangle: -45,
+                        },
+                        yaxis: {
+                            title: 'Blood Pressure (mm Hg)',
+                            range: [40, 181], // Adjusted for typical BP range
+                        },
+                        shapes: [
+                            // Systolic normal/high range line (120)
+                            {
+                                type: 'line',
+                                x0: systolicDates[0],
+                                y0: 120,
+                                x1: systolicDates[systolicDates.length - 1],
+                                y1: 120,
+                                line: {
+                                    color: '#ff4d4d', // Red color
+                                    width: 1,
+                                    dash: 'dash'
+                                }
+                            },
+                            // Diastolic normal/high range line (80)
+                            {
+                                type: 'line',
+                                x0: diastolicDates[0],
+                                y0: 80,
+                                x1: diastolicDates[diastolicDates.length - 1],
+                                y1: 80,
+                                line: {
+                                    color: '#4d79ff', // Blue color
+                                    width: 1,
+                                    dash: 'dash'
+                                }
+                            }
+                        ],
+                        annotations: [
+                            {
+                                x: systolicDates[systolicDates.length - 1],
+                                y: 120,
+                                xref: 'x',
+                                yref: 'y',
+                                text: '120',
+                                showarrow: false,
+                                font: {
+                                    family: 'Arial',
+                                    size: 10,
+                                    color: '#ff4d4d'
+                                },
+                                xanchor: 'right',
+                                yanchor: 'bottom'
+                            },
+                            {
+                                x: diastolicDates[diastolicDates.length - 1],
+                                y: 80,
+                                xref: 'x',
+                                yref: 'y',
+                                text: '80',
+                                showarrow: false,
+                                font: {
+                                    family: 'Arial',
+                                    size: 10,
+                                    color: '#4d79ff'
+                                },
+                                xanchor: 'right',
+                                yanchor: 'bottom'
+                            }
+                        ],
+                        legend: {
+                            orientation: 'h',
+                            y: -0.2
+                        }
+                    };
+
+                    Plotly.newPlot('bp_by_date_chart', traces, layout);
+                })
+                .catch(error => console.error('Error loading data:', error));
+        }
+
+        function changeDateRange(days) {
+            const startInput = document.getElementById('start');
+            const endInput = document.getElementById('end');
+            let startDate = new Date(startInput.value);
+            let endDate = new Date(endInput.value);
+
+            startDate.setDate(startDate.getDate() + days);
+            endDate.setDate(endDate.getDate() + days);
+
+            startInput.valueAsDate = startDate;
+            endInput.valueAsDate = endDate;
+
+            loadData();
+        }
+    </script>
+</body>
+
+</html>

@@ -1,3 +1,8 @@
+// USE SLEEP LOG DATA in node\public\js\sleep_today_sleeplog_by_date_bar.js 
+// TO DEFINE START AND END DATETIME FOR ALL SLEEP CHARTS
+// PASS START AND END DATETIME TO OTHER SLEEP CHARTS VIA setGlobalSleepChartDateRange
+// 
+
 function loadHRByDateData() {
     let startDate, endDate;
     // Get date from the input field after the first load
@@ -6,7 +11,7 @@ function loadHRByDateData() {
     // Calculate the end date (next day)
     endDate = new Date(startDate);
     //endDate.setDate(endDate.getDate() + 1);
-    endDate = endDate.toISOString().split('T')[0];    
+    endDate = endDate.toISOString().split('T')[0];
 
     fetch(`http://localhost:3000/api/hr?start=${startDate}&end=${endDate}`)
         .then(response => response.json())
@@ -17,7 +22,9 @@ function loadHRByDateData() {
 
             const maxHeartRate = Math.max(...heartRate);
             const minHeartRate = Math.min(...heartRate);
-            const avgHeartRate = (heartRate.reduce((a, b) => a + b, 0) / heartRate.length).toFixed(1);
+            const avgHeartRate = (heartRate.reduce((a, b) => a + b, 0) / heartRate.length).toFixed(0);
+
+            const avgRestingHeartRate = (restingHeartRates.reduce((a, b) => a + b, 0) / restingHeartRates.length).toFixed(0); // Calculate average resting heart rate
 
             const heartRateColors = heartRate.map((rate) => {
                 if (rate < 97) return "rgb(0, 128, 128)"; // Normal
@@ -51,7 +58,7 @@ function loadHRByDateData() {
 
             var layout = {
                 title: {
-                    text: `Heart Rate (Avg: ${avgHeartRate} bpm, Max: ${maxHeartRate} bpm, Min: ${minHeartRate} bpm)`,
+                    text: `Heart Rate (Avg: ${avgHeartRate} bpm, Max: ${maxHeartRate} bpm, Min: ${minHeartRate} bpm, Resting Heart Rate: ${avgRestingHeartRate} bpm)`,
                     x: 0.01,
                     xanchor: "left"
                 },

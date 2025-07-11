@@ -459,6 +459,66 @@ async function main() {
       }
     });
 
+    // Sleeplog Summary - Extract summary minutes from Fitbit data
+    app.get("/api/sleeplog_summary", async (req, res) => {
+      let { start, end } = req.query;
+      // Set defaults to today's date if not provided
+      let today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      let todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999); // End of today
+
+      const startDate = start ? new Date(start) : today;
+      const endDate = end ? new Date(end) : todayEnd;
+
+      try {
+        const collection = db.collection("sleeplog_by_date");
+        const pipeline = [
+          {
+            $match: {
+              date: {
+                $gte: startDate.toISOString().substring(0, 10),
+                $lte: endDate.toISOString().substring(0, 10),
+              },
+            },
+          },
+          {
+            $project: {
+              date: 1,
+              // Handle newer devices with detailed sleep stages
+              minutesDeep: "$levels.summary.deep.minutes",
+              minutesLight: "$levels.summary.light.minutes",
+              minutesRem: "$levels.summary.rem.minutes",
+              // Handle both 'wake' and 'awake' labels and combine them
+              minutesAwake: {
+                $add: [
+                  { $ifNull: ["$levels.summary.wake.minutes", 0] },
+                  { $ifNull: ["$levels.summary.awake.minutes", 0] }
+                ]
+              },
+              // Handle older devices with basic sleep/awake data
+              minutesAsleep: "$levels.summary.asleep.minutes",
+              minutesRestless: "$levels.summary.restless.minutes",
+              _id: 0,
+            },
+          },
+        ];
+        const data = await collection.aggregate(pipeline).toArray();
+        console.log(
+          `Sleeplog summary data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
+        );
+
+        res.json(data);
+      } catch (error) {
+        console.error("Error fetching Sleeplog summary data: ", error);
+        res
+          .status(500)
+          .send("Error fetching Sleeplog summary data: " + error.message);
+      }
+    });
+    
     /////////// SpO2 by measurement datetime
     app.get("/api/spo2", async (req, res) => {
       let { start, end } = req.query;
@@ -843,6 +903,187 @@ async function main() {
       }
     });
 
+    /////////// BP - Blood Pressure Daily
+    app.get("/api/bp_daily", async (req, res) => {
+        let { start, end } = req.query;
+        // Set defaults to today's date if not provided
+        let today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+        let todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999); // End of today
+    
+        const startDate = start ? new Date(start) : today;
+        const endDate = end ? new Date(end) : todayEnd;
+    
+        try {
+        const collection = db.collection("bp_by_date");
+        const pipeline = [
+            {
+            $match: {
+                date: {
+                $gte: startDate.toISOString().substring(0, 10),
+                $lte: endDate.toISOString().substring(0, 10),
+                },
+            },
+            },
+            {
+            $group: {
+                _id: "$date", // Group by date
+                avgSystolic: { $avg: "$systolic" },
+                minSystolic: { $min: "$systolic" },
+                maxSystolic: { $max: "$systolic" },
+                avgDiastolic: { $avg: "$diastolic" },
+                minDiastolic: { $min: "$diastolic" },
+                maxDiastolic: { $max: "$diastolic" },
+                avgHeartRate: { $avg: "$heartRate" },
+                minHeartRate: { $min: "$heartRate" },
+                maxHeartRate: { $max: "$heartRate" },
+                readings: { $sum: 1 }, // Count readings per day
+            },
+            },
+            {
+            $project: {
+                _id: 0,
+                date: "$_id",
+                systolic: {
+                avg: { $round: ["$avgSystolic", 1] },
+                min: "$minSystolic",
+                max: "$maxSystolic",
+                },
+                diastolic: {
+                avg: { $round: ["$avgDiastolic", 1] },
+                min: "$minDiastolic",
+                max: "$maxDiastolic",
+                },
+                heartRate: {
+                avg: { $round: ["$avgHeartRate", 1] },
+                min: "$minHeartRate",
+                max: "$maxHeartRate",
+                },
+                readings: 1,
+            },
+            },
+            {
+            $sort: { date: 1 }, // Sort results by date
+            },
+        ];
+        
+        const data = await collection.aggregate(pipeline).toArray();
+        console.log(
+            `BP Daily data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+            }`
+        );
+        res.json(data);
+        } catch (error) {
+        console.error("Error fetching BP Daily data: ", error);
+        res.status(500).send("Error fetching BP Daily data: " + error.message);
+        }
+    });
+
+    // /////////// BP - Blood Pressure Detailed Records
+    app.get("/api/bp_detail", async (req, res) => {
+        let { start, end } = req.query;
+        // Set defaults to today's date if not provided
+        let today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+        let todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999); // End of today
+
+        const startDate = start ? new Date(start) : today;
+        const endDate = end ? new Date(end) : todayEnd;
+
+        try {
+            const collection = db.collection("bp_by_date"); // Assuming your collection is named "bp_by_date"
+            const pipeline = [
+                {
+                    $match: {
+                        date: {
+                            $gte: startDate.toISOString().substring(0, 10),
+                            $lte: endDate.toISOString().substring(0, 10),
+                        },
+                    },
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        date: 1,
+                        systolic: 1,
+                        diastolic: 1,
+                        heartRate: 1,
+                        arm: 1, // Include the arm field in the output
+                        //if you have a timestamp or other details you want to return, add them here.
+                    }
+                },
+                {
+                    $sort: { date: 1 }, // Sort results by date
+                },
+            ];
+
+            const data = await collection.aggregate(pipeline).toArray();
+            res.json(data);
+        } catch (error) {
+            console.error("Error fetching BP Detailed data: ", error);
+            res.status(500).send("Error fetching BP Detailed data: " + error.message);
+        }
+    });
+
+    // /////////// Exercise Details API Endpoint
+    app.get("/api/exercise_detail", async (req, res) => {
+        let { start, end } = req.query;
+        // Set defaults to today's date if not provided
+        let today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+        let todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999); // End of today
+
+        const startDate = start ? new Date(start) : today;
+        const endDate = end ? new Date(end) : todayEnd;
+
+        try {
+            const collection = db.collection("outlook_exercise_by_date");
+            
+            // Simple approach to check if collection exists
+            if (!collection) {
+                console.error("Collection 'outlook_exercise_by_date' not found");
+                return res.status(404).send("Collection not found");
+            }
+            
+            const pipeline = [
+                {
+                    $match: {
+                        date: {
+                            $gte: startDate.toISOString().substring(0, 10),
+                            $lte: endDate.toISOString().substring(0, 10),
+                        },
+                    },
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        date: 1,
+                        duration_minutes: 1,
+                        workout_type: 1,
+                        run_minutes: 1,
+                    },
+                },
+                {
+                    $sort: { date: 1 }, // Sort results by date
+                },
+            ];
+
+            const data = await collection.aggregate(pipeline).toArray();
+            console.log(
+                `Exercise data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+                data.length
+                }`
+            );
+            res.json(data);
+        } catch (error) {
+            console.error("Error fetching exercise data: ", error);
+            res.status(500).send("Error fetching exercise data: " + error.message);
+        }
+    });
     // Route to execute a Python script
     app.get("/run-python", (req, res) => {
       // Specify the path to the Python executable in the virtual environment

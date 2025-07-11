@@ -6,6 +6,7 @@
     <title>Sleep Stages By Date - 100% Chart</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="css/pages.css">
+    <link rel="shortcut icon" href="../favicons/favicon.ico">
 </head>
 
 <body>
@@ -16,6 +17,8 @@
     <input type="date" id="start">
     <label for="end">End Date:</label>
     <input type="date" id="end">
+    <button onclick="changeDateRange(-1)">&#x2212;</button>
+    <button onclick="changeDateRange(1)">&#x2b;</button>
     <button onclick="loadData()">Load Data</button>
 
     <div id="sleeplog_by_date_area" style="width:100%;height:600px;"></div>
@@ -36,39 +39,43 @@
             const startDate = document.getElementById('start').value;
             const endDate = document.getElementById('end').value;
 
-            fetch(`http://localhost:3000/api/sleeplog?start=${startDate}&end=${endDate}`)
+            fetch(`http://localhost:3000/api/sleeplog_summary?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
                 .then(data => {
-                    const groupedData = {};
-                    data.forEach(item => {
-                        const date = (new Date(item.segment_start_time)).toISOString().split('T')[0];
-                        let level = item.level;
-                        if (level === 'wake') { // Standardize 'wake' to 'awake'
-                            level = 'awake';
-                        }
-                        if (!groupedData[date]) {
-                            groupedData[date] = {};
-                        }
-                        if (!groupedData[date][level]) {
-                            groupedData[date][level] = 0;
-                        }
-                        groupedData[date][level] += item.seconds; // Add the seconds directly
-                    });
+                    // Sort the dates so the x-axis values are in order
+                    const sortedDates = data.map(item => item.date).sort((a, b) => new Date(a) - new Date(b));
                     
-                    // First, let's sort the dates so the x-axis values are in order
-                    const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(a) - new Date(b));
-
-                    const levelOrder = ['deep', 'light', 'rem', 'short_wake', 'awake', 'asleep', 'restless']; // Order of levels
+                    const levelOrder = ['deep', 'light', 'rem', 'awake', 'asleep', 'restless']; // Order of levels
                     const traces = [];
 
                     levelOrder.forEach(level => {
                         const x = [];
                         const y = [];
                         sortedDates.forEach(date => {
+                            const day = data.find(d => d.date === date);
+                            let minutes = 0;
+                            let totalMinutes = 0;
+                            if (day) {
+                                // Calculate total minutes from all available stages
+                                const deep = day.minutesDeep || 0;
+                                const light = day.minutesLight || 0;
+                                const rem = day.minutesRem || 0;
+                                const awake = day.minutesAwake || 0;
+                                const asleep = day.minutesAsleep || 0;
+                                const restless = day.minutesRestless || 0;
+                                totalMinutes = deep + light + rem + awake + asleep + restless;
+                                
+                                switch (level) {
+                                    case 'deep': minutes = deep; break;
+                                    case 'light': minutes = light; break;
+                                    case 'rem': minutes = rem; break;
+                                    case 'awake': minutes = awake; break;
+                                    case 'asleep': minutes = asleep; break;
+                                    case 'restless': minutes = restless; break;
+                                }
+                            }
                             x.push(date);
-                            const totalSeconds = Object.values(groupedData[date]).reduce((a, b) => a + b, 0);
-                            const percentage = (groupedData[date][level] || 0) / totalSeconds * 100;
-                            y.push(percentage);
+                            y.push(totalMinutes ? (minutes / totalMinutes) * 100 : 0);
                         });
                         traces.push({
                             x: x,
@@ -82,7 +89,7 @@
                     });
 
                     var layout = {
-                        title: 'Sleeplog Stages By Date - 100% Chart',
+                        title: 'Sleeplog Stages By Date - 100% Chart (Summary Values)',
                         yaxis: { title: 'Percent of Total Sleep', ticksuffix: '%' },
                         xaxis: {
                             title: '',
@@ -110,6 +117,21 @@
                 case 'asleep': return '#808080';
                 default: return '#000000';
             }
+        }
+
+        function changeDateRange(days) {
+            const startInput = document.getElementById('start');
+            const endInput = document.getElementById('end');
+            let startDate = new Date(startInput.value);
+            let endDate = new Date(endInput.value);
+
+            startDate.setDate(startDate.getDate() + days);
+            endDate.setDate(endDate.getDate() + days);
+
+            startInput.valueAsDate = startDate;
+            endInput.valueAsDate = endDate;
+
+            loadData();
         }
     </script>
 </body>

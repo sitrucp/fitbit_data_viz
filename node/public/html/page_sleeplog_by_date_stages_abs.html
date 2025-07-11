@@ -6,6 +6,7 @@
     <title>Sleeplog Stages By Date - Absolute Chart</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="css/pages.css">
+    <link rel="shortcut icon" href="../favicons/favicon.ico">
 </head>
 
 <body>
@@ -15,6 +16,8 @@
     <input type="date" id="start">
     <label for="end">End Date:</label>
     <input type="date" id="end">
+    <button onclick="changeDateRange(-1)">&#x2212;</button>
+    <button onclick="changeDateRange(1)">&#x2b;</button>
     <button onclick="loadData()">Load Data</button>
 
     <div id="sleeplog_by_date_area" style="width:100%;height:600px;"></div>
@@ -35,37 +38,33 @@
             const startDate = document.getElementById('start').value;
             const endDate = document.getElementById('end').value;
 
-            fetch(`http://localhost:3000/api/sleeplog?start=${startDate}&end=${endDate}`)
+            fetch(`http://localhost:3000/api/sleeplog_summary?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
                 .then(data => {
-                    const groupedData = {};
-                    data.forEach(item => {
-                        const date = (new Date(item.segment_start_time)).toISOString().split('T')[0];
-                        let level = item.level;
-                        if (level === 'wake') { // Standardize 'wake' to 'awake'
-                            level = 'awake';
-                        }
-                        if (!groupedData[date]) {
-                            groupedData[date] = {};
-                        }
-                        if (!groupedData[date][level]) {
-                            groupedData[date][level] = 0;
-                        }
-                        groupedData[date][level] += item.seconds / 60 / 60; // Convert to hours
-                    });
-
-                    // First, let's sort the dates so the x-axis values are in order
-                    const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(a) - new Date(b));
-
-                    const levelOrder = ['deep', 'light', 'rem', 'short_wake', 'awake', 'asleep', 'restless']; // Order of levels
+                    // Sort the dates so the x-axis values are in order
+                    const sortedDates = data.map(item => item.date).sort((a, b) => new Date(a) - new Date(b));
+                    
+                    const levelOrder = ['deep', 'light', 'rem', 'awake', 'asleep', 'restless']; // Order of levels
                     const traces = [];
 
                     levelOrder.forEach(level => {
                         const x = [];
                         const y = [];
                         sortedDates.forEach(date => {
+                            const day = data.find(d => d.date === date);
+                            let minutes = 0;
+                            if (day) {
+                                switch (level) {
+                                    case 'deep': minutes = day.minutesDeep || 0; break;
+                                    case 'light': minutes = day.minutesLight || 0; break;
+                                    case 'rem': minutes = day.minutesRem || 0; break;
+                                    case 'awake': minutes = day.minutesAwake || 0; break;
+                                    case 'asleep': minutes = day.minutesAsleep || 0; break;
+                                    case 'restless': minutes = day.minutesRestless || 0; break;
+                                }
+                            }
                             x.push(date);
-                            y.push(groupedData[date][level] || 0); // Use the total minutes directly
+                            y.push(minutes / 60); // Convert to hours
                         });
                         traces.push({
                             x: x,
@@ -79,7 +78,7 @@
                     });
 
                     var layout = {
-                        title: 'Sleeplog Ranges By Date - Absolute Bar Chart',
+                        title: 'Sleeplog Stages By Date - Absolute Bar Chart (Summary Values)',
                         yaxis: { 
                             title: 'Hours of Sleep',
                             dtick: 1,
@@ -126,6 +125,22 @@
                 default: return '#000000';
             }
         }
+
+        function changeDateRange(days) {
+            const startInput = document.getElementById('start');
+            const endInput = document.getElementById('end');
+            let startDate = new Date(startInput.value);
+            let endDate = new Date(endInput.value);
+
+            startDate.setDate(startDate.getDate() + days);
+            endDate.setDate(endDate.getDate() + days);
+
+            startInput.valueAsDate = startDate;
+            endInput.valueAsDate = endDate;
+
+            loadData();
+        }
+        
     </script>
 </body>
 

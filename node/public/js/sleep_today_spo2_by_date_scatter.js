@@ -1,3 +1,8 @@
+// USE SLEEP LOG DATA in node\public\js\sleep_today_sleeplog_by_date_bar.js 
+// TO DEFINE START AND END DATETIME FOR ALL SLEEP CHARTS
+// PASS START AND END DATETIME TO OTHER SLEEP CHARTS VIA setGlobalSleepChartDateRange
+// 
+
 function loadSpo2ByDateScatterData() {
     let startDate, endDate;
     // Get date from the input field after the first load

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Exercise By Date</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/pages.css">
+    <link rel="shortcut icon" href="../favicons/favicon.ico">
+</head>
+
+<body>
+    <h2><a href="index.html">Home</a> | Exercise By Date - Stacked Bar Chart | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a></h2>
+
+    <label for="start">Start Date:</label>
+    <input type="date" id="start">
+    <label for="end">End Date:</label>
+    <input type="date" id="end">
+    <button onclick="changeDateRange(-7)">&#x2212;</button>
+    <button onclick="changeDateRange(7)">&#x2b;</button>
+    <button onclick="loadData()">Load Data</button>
+
+    <div id="exercise_by_date_chart" style="width:100%;height:600px;"></div>
+
+    <script>
+        window.onload = () => {
+            // Set default dates to include a wider range
+            let endDate = new Date();
+            let startDate = new Date('2023-10-01'); // Use a date we know has data
+            document.getElementById('start').valueAsDate = startDate;
+            document.getElementById('end').valueAsDate = endDate;
+            loadData();  // Initial update to draw chart based on the default selection
+        };
+
+        function loadData() {
+            const startDate = document.getElementById('start').value;
+            const endDate = document.getElementById('end').value;
+            
+            //console.log(`Fetching data from ${startDate} to ${endDate}`);
+
+            fetch(`http://localhost:3000/api/exercise_detail?start=${startDate}&end=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    //console.log("Raw API response:", data);
+                    
+                    if (!data || data.length === 0) {
+                        document.getElementById('exercise_by_date_chart').innerHTML = 
+                            '<div style="text-align: center; padding: 50px;">No exercise data available for the selected date range</div>';
+                        return;
+                    }
+                    const dates = data.map(item => {
+                        // Append time part to ensure local midnight
+                        const localDate = new Date(item.date + 'T00:00:00'); 
+                        return localDate;
+                    });
+                    
+                    // Calculate non-run duration for each exercise
+                    const nonRunDurations = data.map(item => {
+                        // Make sure duration_minutes exists and is a number
+                        const duration = typeof item.duration_minutes === 'number' ? item.duration_minutes : 0;
+                        
+                        // If run_minutes exists, subtract it from total duration, otherwise use full duration
+                        if (item.run_minutes && typeof item.run_minutes === 'number' && item.run_minutes > 0) {
+                            return duration - item.run_minutes;
+                        }
+                        return duration;
+                    });
+                    
+                    // Create run minutes array, using 0 if no run minutes
+                    const runMinutes = data.map(item => {
+                        return (item.run_minutes && typeof item.run_minutes === 'number') ? item.run_minutes : 0;
+                    });
+                    
+                    // Determine colors based on workout type
+                    const nonRunColors = data.map(item => {
+                        if (item.workout_type && 
+                            (item.workout_type.toLowerCase().includes('chest') || 
+                             item.workout_type.toLowerCase().includes('arm'))) {
+                            return 'rgba(0, 128, 128, 0.7)'; // teal for chest and arms
+                        } else {
+                            return 'rgba(128, 64, 128, 0.7)'; // purple for back and shoulders
+                        }
+                    });
+                    
+                    // Non-run duration trace
+                    var nonRunTrace = {
+                        x: dates,
+                        y: nonRunDurations,
+                        type: 'bar',
+                        name: 'Workout Duration',
+                        marker: {
+                            color: nonRunColors
+                        },
+                        text: data.map(item => item.workout_type || 'Workout'),
+                        hovertemplate: '%{text}<br>Duration: %{y} min<extra></extra>'
+                    };
+                    
+                    // Run minutes trace
+                    var runTrace = {
+                        x: dates,
+                        y: runMinutes,
+                        type: 'bar',
+                        name: 'Run Minutes',
+                        marker: {
+                            color: 'rgba(255, 99, 132, 1)' // pink for run minutes
+                        },
+                        hovertemplate: 'Run: %{y} min<extra></extra>'
+                    };
+
+                    var traces = [nonRunTrace, runTrace];
+
+                    var layout = {
+                        title: 'Exercise Duration By Date',
+                        barmode: 'stack',
+                        xaxis: {
+                            title: '', 
+                            type: 'date',
+                            tickfont: { size: 10 },
+                            tickformat: "%Y-%m-%d", 
+                            tickangle: -45,
+                        },
+                        yaxis: {
+                            title: 'Duration (minutes)',
+                            rangemode: 'tozero', // Force y-axis to start at zero
+                            autorange: true,     // Automatically adjust range based on data
+                        },
+                        legend: {
+                            orientation: 'h',
+                            y: -0.2
+                        }
+                    };
+
+                    // Debug - log the data we're plotting
+                    //console.log("Dates:", dates);
+                   // console.log("Non-run durations:", nonRunDurations);
+                    //console.log("Run minutes:", runMinutes);
+                    
+                    // Only plot if we have data
+                    if (data.length > 0) {
+                        Plotly.newPlot('exercise_by_date_chart', traces, layout);
+                    } else {
+                        document.getElementById('exercise_by_date_chart').innerHTML = 
+                            '<div style="text-align: center; padding: 50px;">No exercise data available for the selected date range</div>';
+                    }
+                })
+                .catch(error => console.error('Error loading exercise data:', error));
+        }
+
+        function changeDateRange(days) {
+            const startInput = document.getElementById('start');
+            const endInput = document.getElementById('end');
+            let startDate = new Date(startInput.value);
+            let endDate = new Date(endInput.value);
+
+            startDate.setDate(startDate.getDate() + days);
+            endDate.setDate(endDate.getDate() + days);
+
+            startInput.valueAsDate = startDate;
+            endInput.valueAsDate = endDate;
+
+            loadData();
+        }
+    </script>
+</body>
+
+</html>

@@ -1,5 +1,6 @@
 # get_all_data.py
 # use to run all of the active get json data and insert modules
+# to run this for testing use  python -m etl.insert_ep_bp_by_date
 
 from datetime import datetime
 import importlib
@@ -19,6 +20,7 @@ module_names = [
     'etl.get_ep_spo2_intraday_by_interval',
     'etl.get_ep_vo2max_intraday_by_interval',
     'etl.get_ep_tempskin_by_date',
+    #etl.get_outlook_health_and_excercise', # is not included, run manually
     'etl.insert_ep_activities_steps_intraday_by_date',
     'etl.insert_ep_hr_intraday_by_date',
     'etl.insert_ep_br_intraday_by_interval',
@@ -28,6 +30,9 @@ module_names = [
     'etl.insert_ep_vo2max_intraday_by_interval',
     'etl.insert_ep_tempskin_by_date',
     'etl.insert_ep_vo2max_intraday_by_interval',
+    'etl.insert_ep_bp_by_date',
+    #etl.insert_outlook_health', # is not included, run manually
+    #etl.insert_outlook_excercise', # is not included, run manually
 ]
 
 def run_all_modules():

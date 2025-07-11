@@ -6,6 +6,7 @@
     <title>SpO2 By Date Scatter</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="css/pages.css">
+    <link rel="shortcut icon" href="../favicons/favicon.ico">
 </head>
 
 <body>
@@ -15,6 +16,8 @@
     <input type="date" id="start">
     <label for="end">End Date:</label>
     <input type="date" id="end">
+    <button onclick="changeDateRange(-1)">&#x2212;</button>
+    <button onclick="changeDateRange(1)">&#x2b;</button>
     <button onclick="loadData()">Load Data</button>
 
     <div id="hrv_by_date_line" style="width:100%;height:600px;"></div>
@@ -117,6 +120,22 @@
                 })
                 .catch(error => console.error('Error loading data:', error));
         }
+
+        function changeDateRange(days) {
+            const startInput = document.getElementById('start');
+            const endInput = document.getElementById('end');
+            let startDate = new Date(startInput.value);
+            let endDate = new Date(endInput.value);
+
+            startDate.setDate(startDate.getDate() + days);
+            endDate.setDate(endDate.getDate() + days);
+
+            startInput.valueAsDate = startDate;
+            endInput.valueAsDate = endDate;
+
+            loadData();
+        }
+        
     </script>
 </body>
 

@@ -1,6 +1,9 @@
 # insert_ep_sleeplog_by_interval.py
 # upserts data into MongoDB collection
 
+# insert_ep_sleeplog_by_interval.py
+# upserts data into MongoDB collection
+
 import json
 import glob
 import os
@@ -9,11 +12,50 @@ from pymongo import MongoClient
 from etl.response_log import get_last_response
 from etl.db_connection import get_database
 
+def calculate_30day_average(collection, date_str, sleep_stage):
+    """
+    Calculate 30-day average for a given sleep stage up to (but not including) the given date
+    
+    Args:
+        collection: MongoDB collection
+        date_str: Date string in YYYY-MM-DD format
+        sleep_stage: Field name for the sleep stage (e.g., 'minutesDeep')
+        
+    Returns:
+        float: 30-day average value, or 0 if no data available
+    """
+    end_date = datetime.strptime(date_str, '%Y-%m-%d')
+    start_date = end_date - timedelta(days=30)
+    
+    # Query previous 30 days of data
+    pipeline = [
+        {
+            '$match': {
+                'date': {
+                    '$gte': start_date.strftime('%Y-%m-%d'),
+                    '$lt': date_str
+                },
+                sleep_stage: {'$exists': True}
+            }
+        },
+        {
+            '$group': {
+                '_id': None,
+                'avgValue': {'$avg': f'${sleep_stage}'}
+            }
+        }
+    ]
+    
+    result = list(collection.aggregate(pipeline))
+    if result and 'avgValue' in result[0]:
+        return round(result[0]['avgValue'], 1)
+    return 0
+
 def main():
     # Define module
     module_name_str = "get_ep_sleeplog_by_interval"
 
-    # Setup MongoDB connection using the centralized connection function
+    # Setup MongoDB connection
     db = get_database()
     collection = db["sleeplog_by_date"]
 
@@ -30,46 +72,54 @@ def main():
 
     for file in files:
         # Extract date from filename
-        file_date_str = os.path.basename(file).split('_')[-3:]  # ['2024', '03', '30.json']
-        file_date_str[-1] = file_date_str[-1].split('.')[0]  # Remove '.json' from the last element
+        file_date_str = os.path.basename(file).split('_')[-3:]  
+        file_date_str[-1] = file_date_str[-1].split('.')[0]  
         file_date = datetime.strptime('-'.join(file_date_str), '%Y-%m-%d').date()
 
-        # Insert files including files one day before last response date to ensure partial days are updated
         if file_date >= last_response_date - timedelta(days=1):
-
             with open(file, 'r') as f:
                 data = json.load(f)
 
-                # Ensure 'sleep' array exists in your data
                 if "sleep" not in data:
                     continue
 
-                # Iterate through each 'sleep' dataset
                 for sleep_data in data["sleep"]:
-                    # Ensure 'dateOfSleep' exists in your sleep data
                     if 'dateOfSleep' not in sleep_data:
                         continue
 
-                    # Add 'lastModified' timestamp
                     sleep_data['lastModified'] = datetime.now().isoformat()
-
-                    # Convert 'dateOfSleep' to 'date' and format it
                     sleep_data['date'] = datetime.strptime(sleep_data.pop('dateOfSleep'), '%Y-%m-%d').date().isoformat()
 
-                    # Prepare the upsert document by unpacking sleep_data
+                    # Extract summary data
+                    if 'levels' in sleep_data and 'summary' in sleep_data['levels']:
+                        summary = sleep_data['levels']['summary']
+                        
+                        # Add minutes for each sleep stage
+                        sleep_data['minutesDeep'] = summary.get('deep', {}).get('minutes', 0)
+                        sleep_data['minutesRem'] = summary.get('rem', {}).get('minutes', 0)
+                        sleep_data['minutesLight'] = summary.get('light', {}).get('minutes', 0)
+                        
+                        # Calculate and add 30-day averages
+                        sleep_data['minutesDeepAvg30day'] = calculate_30day_average(
+                            collection, sleep_data['date'], 'minutesDeep')
+                        sleep_data['minutesRemAvg30day'] = calculate_30day_average(
+                            collection, sleep_data['date'], 'minutesRem')
+                        sleep_data['minutesLightAvg30day'] = calculate_30day_average(
+                            collection, sleep_data['date'], 'minutesLight')
+
+                    # Prepare the upsert document
                     document = {**sleep_data}
-
-                    # Define the filter for the upsert operation using 'date'
                     filter_criteria = {'date': document['date']}
-
-                    # Use replace_one for upsert behavior
+                    
+                    # Upsert the document
                     collection.replace_one(filter_criteria, document, upsert=True)
+                    print(f"Processed {document['date']} - Deep Avg: {document.get('minutesDeepAvg30day')}, "
+                          f"REM Avg: {document.get('minutesRemAvg30day')}, "
+                          f"Light Avg: {document.get('minutesLightAvg30day')}")
 
-                # print success
-                file_name = os.path.basename(file)
-                print("inserted:", file_name)
+                print("Inserted:", os.path.basename(file))
 
-    # After inserting all documents, create an index on the 'dateOfSleep' field
+    # Create index on the date field
     collection.create_index([("date", 1)]) 
 
 if __name__ == '__main__':

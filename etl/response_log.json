@@ -1,93 +1,93 @@
 {
     "get_ep_activities_calories_intraday_by_date": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:31"
+            "timestamp": "2025-07-11-13:24:23"
         }
     ],
     "get_ep_activities_distance_intraday_by_date": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:32"
+            "timestamp": "2025-07-11-13:24:25"
         }
     ],
     "get_ep_activities_elevation_intraday_by_date": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:33"
+            "timestamp": "2025-07-11-13:24:26"
         }
     ],
     "get_ep_activities_floors_intraday_by_date": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:34"
+            "timestamp": "2025-07-11-13:24:27"
         }
     ],
     "get_ep_activities_steps_intraday_by_date": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:34"
+            "timestamp": "2025-07-11-13:24:29"
         }
     ],
     "get_ep_br_intraday_by_interval": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:38"
+            "timestamp": "2025-07-11-13:24:32"
         }
     ],
     "get_ep_ecg_intraday_by_date": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:35"
+            "timestamp": "2025-07-11-13:24:29"
         }
     ],
     "get_ep_hr_intraday_by_date": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:37"
+            "timestamp": "2025-07-11-13:24:31"
         }
     ],
     "get_ep_hrv_intraday_by_interval": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:38"
+            "timestamp": "2025-07-11-13:24:33"
         }
     ],
     "get_ep_sleeplog_by_interval": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:39"
+            "timestamp": "2025-07-11-13:24:34"
         }
     ],
     "get_ep_spo2_intraday_by_interval": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:40"
+            "timestamp": "2025-07-11-13:24:35"
         }
     ],
     "get_ep_tempskin_by_date": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:41"
+            "timestamp": "2025-07-11-13:24:37"
         }
     ],
     "get_ep_vo2max_intraday_by_interval": [
         {
-            "date": "2024-09-07",
+            "date": "2025-07-11",
             "status": "success",
-            "timestamp": "2024-09-07-21:13:40"
+            "timestamp": "2025-07-11-13:24:36"
         }
     ]
 }

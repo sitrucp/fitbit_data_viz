@@ -6,14 +6,40 @@
     <title>Fitbit Data Visualizations - Sleep Summary</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="css/pages.css"> 
+    <link rel="shortcut icon" href="../favicons/favicon.ico">
 </head>
 
 <body>
     <h2><a href="index.html">Home</a> | <a href="index_today.html">Today</a> | Sleep</h2>
     <div class="button-output-container">
-        <button onclick="runPython()">Run Python Script</button>
+        <button onclick="runPython()">Get New Data</button>
         <pre id="output"></pre>
       </div>
+
+    <label for="start">Date:</label>
+    <button id="yesterdayButton" type="button">Yesterday</button>
+    <input type="date" id="start">
+    <button id="tomorrowButton" type="button">Tomorrow</button>
+    <button onclick="updateCharts()">Load Data</button>
+
+    <div id="sleep_today_sleeplog_by_date_bar" class="chart-container-hourly"></div>
+    <div id="sleep_today_hr_by_date_scatter" class="chart-container-hourly"></div>
+    <div id="sleep_today_spo2_by_date_scatter" class="chart-container-hourly"></div>
+    <div id="sleep_today_hrv_by_date_scatter" class="chart-container-hourly"></div>
+    <div id="sleep_year_spo2_by_date_bar" class="chart-container-date"></div>
+    <div id="sleep_year_br_by_date_scatter" class="chart-container-date"></div>
+    <div id="sleep_year_hrv_by_date_area" class="chart-container-date"></div>
+    
+    <script src="js/sleep_global_vars.js"></script>
+    <script src="js/sleep_today_sleeplog_by_date_bar.js"></script>
+    <script src="js/sleep_today_hr_by_date_scatter.js"></script>
+    <script src="js/sleep_today_spo2_by_date_scatter.js"></script>
+    <script src="js/sleep_today_hrv_by_date_scatter.js"></script>
+    <script src="js/sleep_year_spo2_by_date_bar.js"></script>
+    <script src="js/sleep_year_br_by_date_scatter.js"></script>
+    <script src="js/sleep_year_hrv_by_date_area.js"></script>
+    <script src="js/sleep_update_charts.js"></script>
+
     <script>
         function runPython() {
             const outputElement = document.getElementById('output');
@@ -35,27 +61,6 @@
         }
     </script>
 
-    <label for="start">Date:</label>
-    <input type="date" id="start">
-    <button onclick="updateCharts()">Load Data</button>
-
-    <div id="sleep_today_sleeplog_by_date_bar" class="chart-container-hourly"></div>
-    <div id="sleep_today_hr_by_date_scatter" class="chart-container-hourly"></div>
-    <div id="sleep_today_spo2_by_date_scatter" class="chart-container-hourly"></div>
-    <div id="sleep_today_hrv_by_date_scatter" class="chart-container-hourly"></div>
-    <div id="sleep_year_spo2_by_date_bar" class="chart-container-date"></div>
-    <div id="sleep_year_br_by_date_scatter" class="chart-container-date"></div>
-    <div id="sleep_year_hrv_by_date_area" class="chart-container-date"></div>
-    
-    <script src="js/sleep_global_vars.js"></script>
-    <script src="js/sleep_today_sleeplog_by_date_bar.js"></script>
-    <script src="js/sleep_today_hr_by_date_scatter.js"></script>
-    <script src="js/sleep_today_spo2_by_date_scatter.js"></script>
-    <script src="js/sleep_today_hrv_by_date_scatter.js"></script>
-    <script src="js/sleep_year_spo2_by_date_bar.js"></script>
-    <script src="js/sleep_year_br_by_date_scatter.js"></script>
-    <script src="js/sleep_year_hrv_by_date_area.js"></script>
-    <script src="js/sleep_update_charts.js"></script>
 </body>
 
 </html>

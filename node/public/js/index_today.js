@@ -14,6 +14,16 @@
     });
   };
 
+  function changeDateRange(days) {
+    const startInput = document.getElementById('start');
+    let startDate = new Date(startInput.value);
+
+    startDate.setDate(startDate.getDate() + days);
+
+    startInput.valueAsDate = startDate;
+
+    loadAllData(startDate.toISOString().split("T")[0]);
+}
 
   const formatMinutesToHours = (minutes) => {
     const h = Math.floor(minutes / 60);

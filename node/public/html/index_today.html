@@ -6,13 +6,14 @@
     <title>Fitbit Data Visualizations - Today</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"
         integrity="sha256-QvgynZibb2U53SsVu98NggJXYqwRL7tg3FeyfXvPOUY=" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="css/pages.css"> 
+    <link rel="stylesheet" href="css/pages.css">
+    <link rel="shortcut icon" href="../favicons/favicon.ico">
 </head>
 
 <body>
     <h2><a href="index.html">Home</a> | Today | <a href="index_sleep.html">Sleep</a></h2>
     <div class="button-output-container">
-        <button onclick="runPython()">Run Python Script</button>
+        <button onclick="runPython()">Get New Data</button>
         <pre id="output"></pre>
       </div>
     <script>
@@ -38,6 +39,8 @@
 
     <label for="start">Date:</label>
     <input type="date" id="start">
+    <button onclick="changeDateRange(-1)">&#x2212;</button>
+    <button onclick="changeDateRange(1)">&#x2b;</button>
     <button id="loadDataButton">Load Data</button>
 
     <div class="grid-container">

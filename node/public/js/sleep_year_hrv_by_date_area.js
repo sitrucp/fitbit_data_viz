@@ -1,3 +1,8 @@
+// USE SLEEP LOG DATA in node\public\js\sleep_today_sleeplog_by_date_bar.js 
+// TO DEFINE START AND END DATETIME FOR ALL SLEEP CHARTS
+// PASS START AND END DATETIME TO OTHER SLEEP CHARTS VIA setGlobalSleepChartDateRange
+// 
+
 // Flag to indicate first load
 let isFirstLoadHRV = true;
 

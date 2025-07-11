@@ -1,3 +1,8 @@
+// USE SLEEP LOG DATA in node\public\js\sleep_today_sleeplog_by_date_bar.js 
+// TO DEFINE START AND END DATETIME FOR ALL SLEEP CHARTS
+// PASS START AND END DATETIME TO OTHER SLEEP CHARTS VIA setGlobalSleepChartDateRange
+// 
+
 function loadSleepLogData() {
   let startDate, endDate;
   // Get date from the input field after the first load
@@ -19,10 +24,13 @@ function loadSleepLogData() {
       const minStart = new Date(Math.min(...datesStart));
       const maxEnd = new Date(Math.max(...datesEnd));
 
-      // Add 4 hours (240 minutes) to convert to the correct EDT time
-      const adjustedStart = new Date(minStart.getTime() + 240 * 60000);
-      const adjustedEnd = new Date(maxEnd.getTime() + 240 * 60000);
+    // USE SLEEP LOG DATA TO DEFINE START AND END DATETIME FOR ALL SLEEP CHARTS
+      // CALCULATE EDT VALUE - Add 4 hours (240 minutes) to convert to the correct EDT time
+      // FOR DAYLIGHT SAVINGS - Add 3.5 hours (210 minutes) to convert to the correct EDT time
+      const adjustedStart = new Date(minStart.getTime() + 210 * 60000);
+      const adjustedEnd = new Date(maxEnd.getTime() + 210 * 60000);
 
+    // PASS START AND END DATETIME TO OTHER SLEEP CHARTS VIA setGlobalSleepChartDateRange
       // Set the global sleep chart date range using the formatted local times
       setGlobalSleepChartDateRange(adjustedStart, adjustedEnd);
 
