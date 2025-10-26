@@ -11,6 +11,11 @@
 
 <body>
     <h2><a href="index.html">Home</a> | VO2 Max By Date - Line Chart | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a></h2>
+    
+    <div class="button-output-container">
+        <button onclick="getNewData()">Get New Data</button>
+        <pre id="output"></pre>
+    </div>
 
     <label for="start">Start Date:</label>
     <input type="date" id="start">

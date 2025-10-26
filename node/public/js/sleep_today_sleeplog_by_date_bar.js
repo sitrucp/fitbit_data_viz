@@ -49,7 +49,7 @@ function loadSleepLogData() {
         .then((response) => response.json())
         .then((dailyData) => {
           // Process the daily sleep data and create the updated title
-          const { minutesAsleep, minutesAwake, startTime, endTime } =
+          const { minutesAsleep, minutesAwake, startTime, endTime, minutesDeep, minutesRem, minutesLight, minutesDeepAvg30day, minutesRemAvg30day, minutesLightAvg30day } =
             dailyData[0];
 
           // Convert minutes to hours and minutes
@@ -58,15 +58,31 @@ function loadSleepLogData() {
           const awakeHours = Math.floor(minutesAwake / 60);
           const awakeMinutes = minutesAwake % 60;
 
+          // Convert sleep stage minutes to hours and minutes (ensure integers)
+          const deepHours = Math.floor(Math.round(minutesDeep || 0) / 60);
+          const deepMinutes = Math.round(minutesDeep || 0) % 60;
+          const remHours = Math.floor(Math.round(minutesRem || 0) / 60);
+          const remMinutes = Math.round(minutesRem || 0) % 60;
+          const lightHours = Math.floor(Math.round(minutesLight || 0) / 60);
+          const lightMinutes = Math.round(minutesLight || 0) % 60;
+
+          // Convert 30-day average minutes to hours and minutes (ensure integers)
+          const deepAvgHours = Math.floor(Math.round(minutesDeepAvg30day || 0) / 60);
+          const deepAvgMinutes = Math.round(minutesDeepAvg30day || 0) % 60;
+          const remAvgHours = Math.floor(Math.round(minutesRemAvg30day || 0) / 60);
+          const remAvgMinutes = Math.round(minutesRemAvg30day || 0) % 60;
+          const lightAvgHours = Math.floor(Math.round(minutesLightAvg30day || 0) / 60);
+          const lightAvgMinutes = Math.round(minutesLightAvg30day || 0) % 60;
+
           // Format start and end times
           const startTimeFormatted = new Date(startTime).toLocaleString(
             "en-US"
           );
           const endTimeFormatted = new Date(endTime).toLocaleString("en-US");
 
-          // Create the updated title
-          const titleText = `Sleep Stages: Asleep: ${asleepHours}h ${asleepMinutes}m | Awake: ${awakeHours}h ${awakeMinutes}m | Start: ${startTimeFormatted} | End: ${endTimeFormatted}`;
-
+          // Create the updated title with sleep stage breakdown
+          const titleText = `Sleep Stages: Asleep: ${asleepHours}h ${asleepMinutes}m | Awake: ${awakeHours}h ${awakeMinutes}m | Start: ${startTimeFormatted} | End: ${endTimeFormatted}<br><span style="font-size: 80%;">Today/30-Day Avg: Deep: ${deepHours}h ${deepMinutes}m / ${deepAvgHours}h ${deepAvgMinutes}m, REM: ${remHours}h ${remMinutes}m / ${remAvgHours}h ${remAvgMinutes}m, Light: ${lightHours}h ${lightMinutes}m / ${lightAvgHours}h ${lightAvgMinutes}m</span> | <a href="screenshots/sleep_index/sleep_today_sleeplog_by_date_bar.html" style="color: #387ADF; text-decoration: underline;">view all days</a>`;
+          
           // Generate dummy traces for the legend
           const stages = ["deep", "light", "rem", "wake", "short_wake"];
           var traces = stages.map((stage) => ({
@@ -87,6 +103,11 @@ function loadSleepLogData() {
               text: titleText,
               x: 0.01, // Aligns the title to the left
               xanchor: "left", // Anchors the title text to the left edge of its container
+              font: {
+                size: 16, // Set font size (default is usually around 14-16)
+                color: '#333333', // Optional: set font color
+                family: 'Arial, sans-serif' // Optional: set font family
+              }
             },
             xaxis: {
               title: "",
@@ -104,7 +125,7 @@ function loadSleepLogData() {
               l: 40,
               r: 40,
               b: 40,
-              t: 40, // Smaller top margin if the title is removed
+              t: 60, // Increased top margin to accommodate two-line title
               pad: 4,
             },
             legend: {
@@ -115,7 +136,11 @@ function loadSleepLogData() {
             autosize: true,
           };
 
-          Plotly.newPlot("sleep_today_sleeplog_by_date_bar", traces, layout);
+          Plotly.newPlot("sleep_today_sleeplog_by_date_bar", traces, layout).then(() => {
+            const dateInput = document.getElementById('start');
+            const dateStr = (dateInput && dateInput.value) ? dateInput.value : new Date().toISOString().slice(0,10);
+            captureChart('sleep_today_sleeplog', dateStr, 'sleep_today_sleeplog_by_date_bar');
+          });
         })
         .catch((error) =>
           console.error("Error loading sleeplog_daily data:", error)

@@ -10,9 +10,13 @@
 </head>
 
 <body>
-    <h2><a href="index.html">Home</a> | Blood Pressure By Date - Scatter Plot | <a href="index_today.html">Today</a> | <a
-            href="index_sleep.html">Sleep</a></h2>
-
+    <h2><a href="index.html">Home</a> | Blood Pressure By Date - Scatter Plot | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a></h2>
+    
+    <div class="button-output-container">
+        <button onclick="getNewData()">Get New Data</button>
+        <pre id="output"></pre>
+    </div>
+    
     <label for="start">Start Date:</label>
     <input type="date" id="start">
     <label for="end">End Date:</label>
@@ -35,7 +39,7 @@
             // Set default dates
             let endDate = new Date();
             let startDate = new Date();
-            startDate.setDate(endDate.getDate() - 2000); // set start xx days earlier than today
+            startDate.setDate(endDate.getDate() - 2800); // set start xx days earlier than today
             document.getElementById('start').valueAsDate = startDate;
             document.getElementById('end').valueAsDate = endDate;
             loadData(); // Initial update to draw chart based on the default selection
@@ -61,36 +65,77 @@
                     console.log('All data:', data);
                     console.log('Filtered data:', filteredData);
 
-                    const systolicDates = filteredData.map(item => new Date(item.date + 'T00:00:00'));
-                    const diastolicDates = filteredData.map(item => new Date(item.date + 'T00:00:00'));
-                    const systolicValues = filteredData.map(item => item.systolic);
-                    const diastolicValues = filteredData.map(item => item.diastolic);
-
-                    // Systolic trace
-                    var systolicTrace = {
-                        x: systolicDates,
-                        y: systolicValues,
-                        mode: 'markers',
-                        type: 'scatter',
-                        name: 'Systolic',
-                        marker: {
-                            color: '#ff4d4d' // Red color
+                    // --- Group data by device ---
+                    const groupedByDevice = filteredData.reduce((acc, item) => {
+                        const device = item.device || 'unknown';
+                        if (!acc[device]) {
+                            acc[device] = [];
                         }
+                        acc[device].push(item);
+                        return acc;
+                    }, {});
+
+                    // --- Define marker styles for each device ---
+                    const deviceSymbols = {
+                        'er': 'star',
+                        'doctor': 'hexagram',
+                        'homedics wrist': 'circle',
+                        'pharmacy': 'hourglass',
+                        'unknown': 'cross'
                     };
 
-                    // Diastolic trace
-                    var diastolicTrace = {
-                        x: diastolicDates,
-                        y: diastolicValues,
-                        mode: 'markers',
-                        type: 'scatter',
-                        name: 'Diastolic',
-                        marker: {
-                            color: '#4d79ff' // Blue color
-                        }
-                    };
+                    const traces = [];
+                    // FIX: Use a space ' ' instead of 'T' to combine date and time
+                    const allDates = filteredData.map(item => new Date(item.date + ' ' + item.time));
 
-                    var traces = [systolicTrace, diastolicTrace];
+                    // Handle case where there is no data after filtering
+                    if (filteredData.length === 0) {
+                        Plotly.newPlot('bp_by_date_chart', [], { title: 'Blood Pressure By Date - Detail', yaxis: { range: [40, 181] } });
+                        console.log('No data to display for the selected filters.');
+                        return;
+                    }
+
+                    for (const device in groupedByDevice) {
+                        const deviceData = groupedByDevice[device];
+                        // FIX: Use a space ' ' instead of 'T' to combine date and time
+                        const dates = deviceData.map(item => new Date(item.date + ' ' + item.time));
+                        
+                        // Systolic trace for this device
+                        traces.push({
+                            x: dates,
+                            y: deviceData.map(item => item.systolic),
+                            mode: 'markers',
+                            type: 'scatter',
+                            name: `Systolic (${device})`,
+                            marker: {
+                                color: device === 'homedics wrist' ? '#ff4d4d' : 'rgba(255, 77, 77, 0)', // Filled for homedics wrist, transparent for others
+                                symbol: deviceSymbols[device] || 'circle',
+                                size: device === 'homedics wrist' ? 3 : 8, // Much smaller size for homedics wrist
+                                line: device === 'homedics wrist' ? undefined : {
+                                    color: '#ff4d4d',
+                                    width: 1
+                                }
+                            }
+                        });
+
+                        // Diastolic trace for this device
+                        traces.push({
+                            x: dates,
+                            y: deviceData.map(item => item.diastolic),
+                            mode: 'markers',
+                            type: 'scatter',
+                            name: `Diastolic (${device})`,
+                            marker: {
+                                color: device === 'homedics wrist' ? '#4d79ff' : 'rgba(77, 121, 255, 0)', // Filled for homedics wrist, transparent for others
+                                symbol: deviceSymbols[device] || 'circle',
+                                size: device === 'homedics wrist' ? 3 : 8, // Much smaller size for homedics wrist
+                                line: device === 'homedics wrist' ? undefined : {
+                                    color: '#4d79ff',
+                                    width: 1
+                                }
+                            }
+                        });
+                    }
 
                     var layout = {
                         title: 'Blood Pressure By Date - Detail',
@@ -109,9 +154,9 @@
                             // Systolic normal/high range line (120)
                             {
                                 type: 'line',
-                                x0: systolicDates[0],
+                                x0: allDates[0],
                                 y0: 120,
-                                x1: systolicDates[systolicDates.length - 1],
+                                x1: allDates[allDates.length - 1],
                                 y1: 120,
                                 line: {
                                     color: '#ff4d4d', // Red color
@@ -122,9 +167,9 @@
                             // Diastolic normal/high range line (80)
                             {
                                 type: 'line',
-                                x0: diastolicDates[0],
+                                x0: allDates[0],
                                 y0: 80,
-                                x1: diastolicDates[diastolicDates.length - 1],
+                                x1: allDates[allDates.length - 1],
                                 y1: 80,
                                 line: {
                                     color: '#4d79ff', // Blue color
@@ -135,7 +180,7 @@
                         ],
                         annotations: [
                             {
-                                x: systolicDates[systolicDates.length - 1],
+                                x: allDates[allDates.length - 1],
                                 y: 120,
                                 xref: 'x',
                                 yref: 'y',
@@ -150,7 +195,7 @@
                                 yanchor: 'bottom'
                             },
                             {
-                                x: diastolicDates[diastolicDates.length - 1],
+                                x: allDates[allDates.length - 1],
                                 y: 80,
                                 xref: 'x',
                                 yref: 'y',
@@ -191,6 +236,7 @@
             loadData();
         }
     </script>
+    <script src="js/get_new_data.js"></script>
 </body>
 
 </html>

@@ -3,8 +3,26 @@ const path = require("path"); // Add this line
 // Import child_process to run python code
 const { exec } = require("child_process");
 const { MongoClient } = require("mongodb");
+const fs = require('fs');
 const app = express();
 const port = 3000;
+
+// === Add JSON body parser (needed for screenshot POST) ===
+app.use(express.json({ limit: '15mb' }));
+
+const SCREENSHOT_DIR = path.join(__dirname, 'public', 'screenshots', 'index_sleep', 'sleep_today_sleeplog_by_date');
+if (!fs.existsSync(SCREENSHOT_DIR)) fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+
+function validDate(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }
+
+// OPTIONAL: if you need simple CORS (same-origin fetch doesn’t need it, can remove)
+app.use((req,res,next)=>{
+  res.setHeader('Access-Control-Allow-Origin','*');
+  res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers','Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 
 // Serve static files from the 'public' directory
 app.use(express.static("public"));
@@ -27,28 +45,73 @@ async function main() {
     /////////// BR - Breathing Rate
     app.get("/api/br", async (req, res) => {
       let { start, end } = req.query;
-      // Set defaults to today's date if not provided
-      const today = new Date(); // Gets the current date and time
-      const startOfDay = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
-      );
-      const endOfDay = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate(),
-        23,
-        59,
-        59,
-        999
-      );
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23,59,59,999);
 
       const startDate = start ? new Date(start) : today;
       const endDate = end ? new Date(end) : todayEnd;
 
       try {
-        const collection = db.collection("br_by_date");
+        const collection = client.db(dbName).collection("br_by_date");
+        const pipeline = [
+          { $match: {
+              date: {
+                $gte: startDate.toISOString().substring(0,10),
+                $lte: endDate.toISOString().substring(0,10)
+              },
+              fullSleepBr: { $gt: 5, $lt: 20 },
+              remSleepBr: { $gt: 5, $lt: 20 },
+              deepSleepBr: { $gt: 5, $lt: 20 },
+              lightSleepBr: { $gt: 5, $lt: 20 },
+            }
+          },
+          { $project: {
+              date:1,
+              fullSleepBr:1,
+              remSleepBr:1,
+              deepSleepBr:1,
+              lightSleepBr:1,
+              _id:0
+            }
+          }
+        ];
+        const data = await collection.aggregate(pipeline).toArray();
+        console.log(`Breathing Rate data ${startDate.toISOString()} -> ${endDate.toISOString()} records=${data.length}`);
+        res.json(data);
+      } catch (e) {
+        console.error("Error fetching Breathing Rate data:", e);
+        res.status(500).json({ error: e.message });
+      }
+    });
+
+    /////////// HR - Heart Rate
+    app.get("/api/hr", async (req, res) => {
+      let { start, end } = req.query;
+      // Set defaults to today's date if not provided
+      let today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      let todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999); // End of today
+
+      const startDate = start ? new Date(start) : today;
+      const endDate = end ? new Date(end) : todayEnd;
+
+      // Calculate age from DOB (1965-08-10)
+      const dob = new Date("1965-08-10");
+      const currentDate = new Date();
+      let userAge = currentDate.getFullYear() - dob.getFullYear();
+      const monthDiff = currentDate.getMonth() - dob.getMonth();
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && currentDate.getDate() < dob.getDate())
+      ) {
+        userAge--;
+      }
+
+      try {
+        const collection = db.collection("hr_intraday_by_date");
         const pipeline = [
           {
             $match: {
@@ -56,92 +119,89 @@ async function main() {
                 $gte: startDate.toISOString().substring(0, 10),
                 $lte: endDate.toISOString().substring(0, 10),
               },
-              fullSleepBr: { $gt: 5, $lt: 20 },
-              remSleepBr: { $gt: 5, $lt: 20 },
-              deepSleepBr: { $gt: 5, $lt: 20 },
-              lightSleepBr: { $gt: 5, $lt: 20 },
             },
+          },
+          {
+            $unwind: "$measurements",
           },
           {
             $project: {
               date: 1,
-              fullSleepBr: 1,
-              remSleepBr: 1,
-              deepSleepBr: 1,
-              lightSleepBr: 1,
+              restingHeartRate: 1,
+              dateTime: "$measurements.dateTime",
+              heartRate: "$measurements.heartRate",
               _id: 0,
             },
           },
         ];
         const data = await collection.aggregate(pipeline).toArray();
-        console.log(
-          `Breathing Rate data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
-            data.length
-          }`
-        );
-        res.json(data);
+
+        // Calculate MAF heart rate zone (180 - age)
+        const mafHR = 180 - userAge;
+        const mafLowerBound = mafHR - 10;
+
+        // Calculate MAF zone minutes
+        const heartRates = data.map((item) => item.heartRate);
+        const mafAerobicMinutes = heartRates.filter((hr) => hr <= mafHR).length;
+        const mafZoneMinutes = heartRates.filter(
+          (hr) => hr >= mafLowerBound && hr <= mafHR
+        ).length;
+
+        // Calculate time intervals (same logic as frontend)
+        const dates = data.map((item) => new Date(item.dateTime));
+        if (dates.length > 1) {
+          const totalMinutes =
+            (dates[dates.length - 1] - dates[0]) / (1000 * 60);
+          const minutesPerDataPoint = totalMinutes / (dates.length - 1);
+
+          const mafAerobicHours = parseFloat(
+            ((mafAerobicMinutes * minutesPerDataPoint) / 60).toFixed(2)
+          );
+          const mafZoneHours = parseFloat(
+            ((mafZoneMinutes * minutesPerDataPoint) / 60).toFixed(2)
+          );
+
+          console.log(
+            `HR data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+              data.length
+            }`
+          );
+
+          res.json({
+            heartRateData: data.map((item) => ({
+              dateTime: item.dateTime,
+              heartRate: item.heartRate,
+              restingHeartRate: item.restingHeartRate,
+            })),
+            mafData: {
+              mafHR: mafHR,
+              mafLowerBound: mafLowerBound,
+              mafAerobicHours: mafAerobicHours, // All time <= MAF HR
+              mafZoneHours: mafZoneHours, // Time in MAF-10 to MAF range
+              userAge: userAge,
+            },
+          });
+        } else {
+          res.json({
+            heartRateData: data.map((item) => ({
+              dateTime: item.dateTime,
+              heartRate: item.heartRate,
+              restingHeartRate: item.restingHeartRate,
+            })),
+            mafData: {
+              mafHR: mafHR,
+              mafLowerBound: mafLowerBound,
+              mafAerobicHours: 0,
+              mafZoneHours: 0,
+              userAge: userAge,
+            },
+          });
+        }
       } catch (error) {
-        console.error("Error fetching Breathing Rate data: ", error);
-        res
-          .status(500)
-          .send("Error fetching Breathing Rate data: " + error.message);
+        console.error("Error fetching HR data: ", error);
+        res.status(500).send("Error fetching HR data: " + error.message);
       }
     });
-
-    /////////// HR - Heart Rate
-    app.get("/api/hr", async (req, res) => {
-        let { start, end } = req.query;
-        // Set defaults to today's date if not provided
-        let today = new Date();
-        today.setHours(0, 0, 0, 0); // Start of today
-        let todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999); // End of today
-    
-        const startDate = start ? new Date(start) : today;
-        const endDate = end ? new Date(end) : todayEnd;
-    
-        try {
-            const collection = db.collection("hr_intraday_by_date");
-            const pipeline = [
-            {
-                $match: {
-                date: {
-                    $gte: startDate.toISOString().substring(0, 10),
-                    $lte: endDate.toISOString().substring(0, 10),
-                },
-                },
-            },
-            {
-                $unwind: "$measurements",
-            },
-            {
-                $project: {
-                date: 1,
-                restingHeartRate: 1,
-                dateTime: "$measurements.dateTime",
-                heartRate: "$measurements.heartRate",
-                _id: 0,
-                },
-            },
-            ];
-            const data = await collection.aggregate(pipeline).toArray();
-            console.log(
-            `HR data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
-                data.length
-            }`
-            );
-            res.json(
-            data.map((item) => ({
-                dateTime: item.dateTime, // Now a formatted string
-                heartRate: item.heartRate,
-                restingHeartRate: item.restingHeartRate,
-            }))
-            );
-        } catch (error) {
-            console.error("Error fetching HR data: ", error);
-            res.status(500).send("Error fetching HR data: " + error.message);
-        }
-        });
 
     /////////// HR - Heart Rate Zones
     app.get("/api/hr_zones", async (req, res) => {
@@ -440,6 +500,12 @@ async function main() {
               endTime: 1,
               efficiency: 1,
               duration: 1,
+              minutesDeep: 1,
+              minutesRem: 1,
+              minutesLight: 1,
+              minutesDeepAvg30day: 1,
+              minutesRemAvg30day: 1,
+              minutesLightAvg30day: 1,
             },
           },
         ];
@@ -493,8 +559,8 @@ async function main() {
               minutesAwake: {
                 $add: [
                   { $ifNull: ["$levels.summary.wake.minutes", 0] },
-                  { $ifNull: ["$levels.summary.awake.minutes", 0] }
-                ]
+                  { $ifNull: ["$levels.summary.awake.minutes", 0] },
+                ],
               },
               // Handle older devices with basic sleep/awake data
               minutesAsleep: "$levels.summary.asleep.minutes",
@@ -518,7 +584,7 @@ async function main() {
           .send("Error fetching Sleeplog summary data: " + error.message);
       }
     });
-    
+
     /////////// SpO2 by measurement datetime
     app.get("/api/spo2", async (req, res) => {
       let { start, end } = req.query;
@@ -642,22 +708,22 @@ async function main() {
           },
           {
             $project: {
-                date: 1,
-                totalSteps: 1,
-                hourGt250Steps: 1,
-                hour: { $hour: "$measurements.dateTime" },
-                steps: "$measurements.steps",
-              },
+              date: 1,
+              totalSteps: 1,
+              hourGt250Steps: 1,
+              hour: { $hour: "$measurements.dateTime" },
+              steps: "$measurements.steps",
+            },
           },
           {
             $group: {
-                _id: {
-                  date: "$date",
-                  hour: "$hour",
-                },
-                steps: { $sum: "$steps" },
-                totalSteps: { $first: "$totalSteps" },
-                hourGt250Steps: { $first: "$hourGt250Steps" },
+              _id: {
+                date: "$date",
+                hour: "$hour",
+              },
+              steps: { $sum: "$steps" },
+              totalSteps: { $first: "$totalSteps" },
+              hourGt250Steps: { $first: "$hourGt250Steps" },
             },
           },
           {
@@ -669,13 +735,18 @@ async function main() {
               date: "$_id.date",
               hour: "$_id.hour",
               dateTime: {
-                $concat: ["$_id.date", " ",{ $toString: "$_id.hour" }, ":00:00"]
+                $concat: [
+                  "$_id.date",
+                  " ",
+                  { $toString: "$_id.hour" },
+                  ":00:00",
+                ],
               },
               steps: 1,
               totalSteps: 1,
               hourGt250Steps: 1,
             },
-        },
+          },
         ];
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
@@ -693,52 +764,18 @@ async function main() {
     });
 
     function calculateCumulativeSteps(data) {
-        let cumulative = 0;
-        let currentDate = "";
-        let results = [];
-      
-        data.forEach((item, index) => {
-          // Use the new date field directly
-          const dateStr = item.date;
-          if (currentDate !== dateStr) {
-            if (currentDate !== "") {
-              // Insert a null entry at the end of the previous day
-              results.push({
-                dateTime: `${currentDate} 23:59:00`,
-                date: null,
-                steps: null,
-                totalSteps: null,
-                hourGt250Steps: null,
-                cumulativeSteps: null,
-                cumulativeStepsPct: null,
-              });
-            }
-            currentDate = dateStr;
-            cumulative = 0; // Reset cumulative total for a new date
-          }
-      
-          cumulative += item.steps;
-      
-          // Calculate cumulative steps percentage
-          const cumulativeStepsPct =
-            item.totalSteps > 0
-              ? Math.ceil((cumulative / item.totalSteps) * 100)
-              : 0;
-      
-          results.push({
-            dateTime: item.dateTime, // Use the dateTime field we created in the pipeline
-            date: item.date,
-            steps: item.steps,
-            totalSteps: item.totalSteps,
-            hourGt250Steps: item.hourGt250Steps,
-            cumulativeSteps: cumulative,
-            cumulativeStepsPct: cumulativeStepsPct,
-          });
-      
-          // Handle the last item to add a null at the end of the last date
-          if (index === data.length - 1) {
+      let cumulative = 0;
+      let currentDate = "";
+      let results = [];
+
+      data.forEach((item, index) => {
+        // Use the new date field directly
+        const dateStr = item.date;
+        if (currentDate !== dateStr) {
+          if (currentDate !== "") {
+            // Insert a null entry at the end of the previous day
             results.push({
-              dateTime: `${dateStr} 23:59:00`,
+              dateTime: `${currentDate} 23:59:00`,
               date: null,
               steps: null,
               totalSteps: null,
@@ -747,10 +784,44 @@ async function main() {
               cumulativeStepsPct: null,
             });
           }
+          currentDate = dateStr;
+          cumulative = 0; // Reset cumulative total for a new date
+        }
+
+        cumulative += item.steps;
+
+        // Calculate cumulative steps percentage
+        const cumulativeStepsPct =
+          item.totalSteps > 0
+            ? Math.ceil((cumulative / item.totalSteps) * 100)
+            : 0;
+
+        results.push({
+          dateTime: item.dateTime, // Use the dateTime field we created in the pipeline
+          date: item.date,
+          steps: item.steps,
+          totalSteps: item.totalSteps,
+          hourGt250Steps: item.hourGt250Steps,
+          cumulativeSteps: cumulative,
+          cumulativeStepsPct: cumulativeStepsPct,
         });
-      
-        return results;
-      }
+
+        // Handle the last item to add a null at the end of the last date
+        if (index === data.length - 1) {
+          results.push({
+            dateTime: `${dateStr} 23:59:00`,
+            date: null,
+            steps: null,
+            totalSteps: null,
+            hourGt250Steps: null,
+            cumulativeSteps: null,
+            cumulativeStepsPct: null,
+          });
+        }
+      });
+
+      return results;
+    }
 
     /////////// Steps Daily
     app.get("/api/steps_daily", async (req, res) => {
@@ -905,184 +976,196 @@ async function main() {
 
     /////////// BP - Blood Pressure Daily
     app.get("/api/bp_daily", async (req, res) => {
-        let { start, end } = req.query;
-        // Set defaults to today's date if not provided
-        let today = new Date();
-        today.setHours(0, 0, 0, 0); // Start of today
-        let todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999); // End of today
-    
-        const startDate = start ? new Date(start) : today;
-        const endDate = end ? new Date(end) : todayEnd;
-    
-        try {
+      let { start, end } = req.query;
+      // Set defaults to today's date if not provided
+      let today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      let todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999); // End of today
+
+      const startDate = start ? new Date(start) : today;
+      const endDate = end ? new Date(end) : todayEnd;
+
+      try {
         const collection = db.collection("bp_by_date");
+
+        // Let's also check what devices we have
+        const distinctDevices = await collection.distinct("device");
+        console.log("Distinct devices in collection:", distinctDevices);
+
         const pipeline = [
-            {
+          {
             $match: {
-                date: {
+              date: {
                 $gte: startDate.toISOString().substring(0, 10),
                 $lte: endDate.toISOString().substring(0, 10),
-                },
+              },
             },
-            },
-            {
+          },
+          {
             $group: {
-                _id: "$date", // Group by date
-                avgSystolic: { $avg: "$systolic" },
-                minSystolic: { $min: "$systolic" },
-                maxSystolic: { $max: "$systolic" },
-                avgDiastolic: { $avg: "$diastolic" },
-                minDiastolic: { $min: "$diastolic" },
-                maxDiastolic: { $max: "$diastolic" },
-                avgHeartRate: { $avg: "$heartRate" },
-                minHeartRate: { $min: "$heartRate" },
-                maxHeartRate: { $max: "$heartRate" },
-                readings: { $sum: 1 }, // Count readings per day
+              _id: { date: "$date", device: "$device" }, // Group by date AND device
+              avgSystolic: { $avg: "$systolic" },
+              minSystolic: { $min: "$systolic" },
+              maxSystolic: { $max: "$systolic" },
+              avgDiastolic: { $avg: "$diastolic" },
+              minDiastolic: { $min: "$diastolic" },
+              maxDiastolic: { $max: "$diastolic" },
+              avgHeartRate: { $avg: "$heartRate" },
+              minHeartRate: { $min: "$heartRate" },
+              maxHeartRate: { $max: "$heartRate" },
+              readings: { $sum: 1 }, // Count readings per day
+              deviceValues: { $addToSet: "$device" }, // Debug: collect all device values
             },
-            },
-            {
+          },
+          {
             $project: {
-                _id: 0,
-                date: "$_id",
-                systolic: {
+              _id: 0,
+              date: "$_id.date",
+              device: "$_id.device",
+              systolic: {
                 avg: { $round: ["$avgSystolic", 1] },
                 min: "$minSystolic",
                 max: "$maxSystolic",
-                },
-                diastolic: {
+              },
+              diastolic: {
                 avg: { $round: ["$avgDiastolic", 1] },
                 min: "$minDiastolic",
                 max: "$maxDiastolic",
-                },
-                heartRate: {
+              },
+              heartRate: {
                 avg: { $round: ["$avgHeartRate", 1] },
                 min: "$minHeartRate",
                 max: "$maxHeartRate",
-                },
-                readings: 1,
+              },
+              readings: 1,
+              deviceValues: 1, // Debug: include collected device values
             },
-            },
-            {
+          },
+          {
             $sort: { date: 1 }, // Sort results by date
-            },
+          },
         ];
-        
+
         const data = await collection.aggregate(pipeline).toArray();
         console.log(
-            `BP Daily data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+          `BP Daily data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
             data.length
-            }`
+          }`
         );
         res.json(data);
-        } catch (error) {
+      } catch (error) {
         console.error("Error fetching BP Daily data: ", error);
         res.status(500).send("Error fetching BP Daily data: " + error.message);
-        }
+      }
     });
 
     // /////////// BP - Blood Pressure Detailed Records
     app.get("/api/bp_detail", async (req, res) => {
-        let { start, end } = req.query;
-        // Set defaults to today's date if not provided
-        let today = new Date();
-        today.setHours(0, 0, 0, 0); // Start of today
-        let todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999); // End of today
+      let { start, end } = req.query;
+      // Set defaults to today's date if not provided
+      let today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      let todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999); // End of today
 
-        const startDate = start ? new Date(start) : today;
-        const endDate = end ? new Date(end) : todayEnd;
+      const startDate = start ? new Date(start) : today;
+      const endDate = end ? new Date(end) : todayEnd;
 
-        try {
-            const collection = db.collection("bp_by_date"); // Assuming your collection is named "bp_by_date"
-            const pipeline = [
-                {
-                    $match: {
-                        date: {
-                            $gte: startDate.toISOString().substring(0, 10),
-                            $lte: endDate.toISOString().substring(0, 10),
-                        },
-                    },
-                },
-                {
-                    $project: {
-                        _id: 0,
-                        date: 1,
-                        systolic: 1,
-                        diastolic: 1,
-                        heartRate: 1,
-                        arm: 1, // Include the arm field in the output
-                        //if you have a timestamp or other details you want to return, add them here.
-                    }
-                },
-                {
-                    $sort: { date: 1 }, // Sort results by date
-                },
-            ];
+      try {
+        const collection = db.collection("bp_by_date"); // Assuming your collection is named "bp_by_date"
+        const pipeline = [
+          {
+            $match: {
+              date: {
+                $gte: startDate.toISOString().substring(0, 10),
+                $lte: endDate.toISOString().substring(0, 10),
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              date: 1,
+              time: 1,
+              systolic: 1,
+              diastolic: 1,
+              heartRate: 1,
+              arm: 1,
+              device: 1,
+              source: 1,
+            },
+          },
+          {
+            $sort: { date: 1, time: 1 }, // Sort by date, then time
+          },
+        ];
 
-            const data = await collection.aggregate(pipeline).toArray();
-            res.json(data);
-        } catch (error) {
-            console.error("Error fetching BP Detailed data: ", error);
-            res.status(500).send("Error fetching BP Detailed data: " + error.message);
-        }
+        const data = await collection.aggregate(pipeline).toArray();
+        res.json(data);
+      } catch (error) {
+        console.error("Error fetching BP Detailed data: ", error);
+        res
+          .status(500)
+          .send("Error fetching BP Detailed data: " + error.message);
+      }
     });
 
     // /////////// Exercise Details API Endpoint
     app.get("/api/exercise_detail", async (req, res) => {
-        let { start, end } = req.query;
-        // Set defaults to today's date if not provided
-        let today = new Date();
-        today.setHours(0, 0, 0, 0); // Start of today
-        let todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999); // End of today
+      let { start, end } = req.query;
+      // Set defaults to today's date if not provided
+      let today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      let todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999); // End of today
 
-        const startDate = start ? new Date(start) : today;
-        const endDate = end ? new Date(end) : todayEnd;
+      const startDate = start ? new Date(start) : today;
+      const endDate = end ? new Date(end) : todayEnd;
 
-        try {
-            const collection = db.collection("outlook_exercise_by_date");
-            
-            // Simple approach to check if collection exists
-            if (!collection) {
-                console.error("Collection 'outlook_exercise_by_date' not found");
-                return res.status(404).send("Collection not found");
-            }
-            
-            const pipeline = [
-                {
-                    $match: {
-                        date: {
-                            $gte: startDate.toISOString().substring(0, 10),
-                            $lte: endDate.toISOString().substring(0, 10),
-                        },
-                    },
-                },
-                {
-                    $project: {
-                        _id: 0,
-                        date: 1,
-                        duration_minutes: 1,
-                        workout_type: 1,
-                        run_minutes: 1,
-                    },
-                },
-                {
-                    $sort: { date: 1 }, // Sort results by date
-                },
-            ];
+      try {
+        const collection = db.collection("outlook_exercise_by_date");
 
-            const data = await collection.aggregate(pipeline).toArray();
-            console.log(
-                `Exercise data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
-                data.length
-                }`
-            );
-            res.json(data);
-        } catch (error) {
-            console.error("Error fetching exercise data: ", error);
-            res.status(500).send("Error fetching exercise data: " + error.message);
+        // Simple approach to check if collection exists
+        if (!collection) {
+          console.error("Collection 'outlook_exercise_by_date' not found");
+          return res.status(404).send("Collection not found");
         }
+
+        const pipeline = [
+          {
+            $match: {
+              date: {
+                $gte: startDate.toISOString().substring(0, 10),
+                $lte: endDate.toISOString().substring(0, 10),
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              date: 1,
+              duration_minutes: 1,
+              workout_type: 1,
+              run_minutes: 1,
+            },
+          },
+          {
+            $sort: { date: 1 }, // Sort results by date
+          },
+        ];
+
+        const data = await collection.aggregate(pipeline).toArray();
+        console.log(
+          `Exercise data from ${startDate.toISOString()} to ${endDate.toISOString()}. Records: ${
+            data.length
+          }`
+        );
+        res.json(data);
+      } catch (error) {
+        console.error("Error fetching exercise data: ", error);
+        res.status(500).send("Error fetching exercise data: " + error.message);
+      }
     });
     // Route to execute a Python script
     app.get("/run-python", (req, res) => {
@@ -1108,6 +1191,70 @@ async function main() {
       );
     });
 
+    // === ADD screenshot save route ===
+    app.post('/api/save_chart', (req, res) => {
+    const { baseName, date, imageDataUrl } = req.body || {};
+
+    if (!baseName || !/^[a-zA-Z0-9_\-]+$/.test(baseName))
+        return res.status(400).json({ error: 'Bad baseName' });
+    if (!date || !validDate(date))
+        return res.status(400).json({ error: 'Bad date (YYYY-MM-DD)' });
+    if (!imageDataUrl || !imageDataUrl.startsWith('data:image/png;base64,'))
+        return res.status(400).json({ error: 'Bad imageDataUrl' });
+
+    const fileName = `${baseName}_${date.replace(/-/g,'_')}.png`;
+    const filePath = path.join(SCREENSHOT_DIR, fileName);
+
+    if (fs.existsSync(filePath)) {
+        console.log(`[save_chart] exists ${fileName}`);
+        return res.json({ status: 'exists', file: fileName });
+    }
+
+    const b64 = imageDataUrl.split(',')[1];
+    fs.writeFile(filePath, b64, 'base64', err => {
+        if (err) {
+        console.error('[save_chart] write failed', err);
+        return res.status(500).json({ error: 'Write failed' });
+        }
+        console.log(`[save_chart] saved ${fileName}`);
+        res.json({ status: 'saved', file: fileName });
+    });
+    });
+    // === END add route ===
+
+    // List images endpoint (generic: /api/list_images?root=screenshots&dir1=index_sleep&dir2=sleep_today_sleeplog_by_date)
+    app.get('/api/list_images', (req, res) => {
+    const { root = 'screenshots', dir1, dir2 } = req.query;
+    const segs = [root, dir1, dir2].filter(Boolean);
+
+    // Validate segments
+    if (!dir1 || !dir2) {
+        return res.status(400).json({ error: 'Missing dir1 or dir2' });
+    }
+    if (!segs.every(s => /^[a-zA-Z0-9_\-]+$/.test(s))) {
+        return res.status(400).json({ error: 'Invalid path segment' });
+    }
+
+    const targetDir = path.join(__dirname, 'public', ...segs);
+    if (!targetDir.startsWith(path.join(__dirname, 'public'))) {
+        return res.status(400).json({ error: 'Invalid path' });
+    }
+
+    fs.readdir(targetDir, (err, files) => {
+        if (err) {
+        if (err.code === 'ENOENT') return res.json({ path: segs.join('/'), files: [] });
+        console.error('[list_images] error', err);
+        return res.status(500).json({ error: 'Read failed' });
+        }
+        // Return only png files
+        const pngs = files.filter(f => f.toLowerCase().endsWith('.png'));
+        res.json({
+        path: segs.join('/'),
+        files: pngs
+        });
+    });
+    });
+
     app.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);
     });
@@ -1118,3 +1265,7 @@ async function main() {
 }
 
 main();
+
+// === REMOVE the following block (it is invalid for Express):
+// app.createServer((req,res)=>{ ... });
+// Delete that entire block.

@@ -15,7 +15,10 @@ function loadHRByDateData() {
 
     fetch(`http://localhost:3000/api/hr?start=${startDate}&end=${endDate}`)
         .then(response => response.json())
-        .then(data => {
+        .then(responseData => {
+            // Handle new API response structure
+            const data = responseData.heartRateData || responseData; // Fallback for backward compatibility
+            
             const dates = data.map(item => new Date(item.dateTime));
             const heartRate = data.map(item => item.heartRate);
             const restingHeartRates = data.map(item => item.restingHeartRate);
@@ -60,7 +63,12 @@ function loadHRByDateData() {
                 title: {
                     text: `Heart Rate (Avg: ${avgHeartRate} bpm, Max: ${maxHeartRate} bpm, Min: ${minHeartRate} bpm, Resting Heart Rate: ${avgRestingHeartRate} bpm)`,
                     x: 0.01,
-                    xanchor: "left"
+                    xanchor: "left",
+                    font: {
+                        size: 16, // Set font size (default is usually around 14-16)
+                        color: '#333333', // Optional: set font color
+                        family: 'Arial, sans-serif' // Optional: set font family
+                    }
                 },
                 xaxis: {
                     title: "",

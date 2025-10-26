@@ -5,13 +5,19 @@
     <meta charset="UTF-8">
     <title>Steps By Date Bar</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="js/csv_export.js"></script>
     <link rel="stylesheet" href="css/pages.css">
     <link rel="shortcut icon" href="../favicons/favicon.ico">
 </head>
 
 <body>
     <h2><a href="index.html">Home</a> | Heart Rate Ranges By Date - Bar Chart | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a></h2>
-
+    
+    <div class="button-output-container">
+        <button onclick="getNewData()">Get New Data</button>
+        <pre id="output"></pre>
+    </div>
+    
     <label for="start">Start Date:</label>
     <input type="date" id="start">
     <label for="end">End Date:</label>
@@ -19,10 +25,14 @@
     <button onclick="changeDateRange(-1)">&#x2212;</button>
     <button onclick="changeDateRange(1)">&#x2b;</button>
     <button onclick="loadData()">Load Data</button>
+    <button onclick="exportCSV()">Export CSV</button>
 
     <div id="hr_zones_by_date_bar" style="width:100%;height:600px;"></div>
 
     <script>
+        // Global variable to store chart data for CSV export
+        let chartData = null;
+        
         window.onload = () => {
             // Set default dates
             let endDate = new Date();
@@ -112,6 +122,13 @@
                     };
     
                     Plotly.newPlot('hr_zones_by_date_bar', traces, layout);
+                    
+                    // Store data for CSV export
+                    chartData = {
+                        dates: dates,
+                        hrBinRanges: hrBinRanges,
+                        traces: traces
+                    };
                 })
                 .catch(error => console.error('Error loading data:', error));
         }
@@ -129,6 +146,29 @@
             endInput.valueAsDate = endDate;
 
             loadData();
+        }
+        
+        function exportCSV() {
+            if (!chartData) {
+                alert('No data available to export. Please load data first.');
+                return;
+            }
+            
+            // Transform chart data to row format using shared utility
+            const rowData = transformChartDataToRows({
+                dates: chartData.dates,
+                categories: chartData.hrBinRanges,
+                traces: chartData.traces
+            });
+            
+            // Export using shared utility
+            exportToCSV({
+                data: rowData,
+                filename: 'page_hr_by_date_ranges.csv',
+                headers: ['Date', ...chartData.hrBinRanges],
+                dateColumn: 'Date',
+                decimalPlaces: 2
+            });
         }
         
     </script>

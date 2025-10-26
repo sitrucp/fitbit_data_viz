@@ -55,6 +55,8 @@
 .chart {
     height: 150px;
     /* Adjust as needed */
+    touch-action: pan-x pan-y; /* Hint for passive touch events */
+    overscroll-behavior: none; /* Prevent scroll chaining */
 }
 
 @media (max-width: 600px) {
@@ -76,4 +78,18 @@ ul.no-bullets {
     /* Adjust as needed */
     margin-bottom: 0px;
     /* Adjust as needed */
+}
+
+.section-header {
+    margin-top: 20px;
+    margin-bottom: 15px;
+    padding: 10px 0;
+    border-bottom: 2px solid #ccc;
+}
+
+.section-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 1.5em;
+    font-weight: bold;
 }

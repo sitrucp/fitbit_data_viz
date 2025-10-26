@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sleep Sleeplog Screenshots (Last 90 Days)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="../../css/pages.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 14px 18px; }
+    h1 { font-size: 1.2rem; margin: 0 0 12px 0; }
+    .controls { margin: 0 0 14px 0; display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .controls label { font-size:0.8rem; display:flex; flex-direction:column; gap:2px; }
+    .note { font-size:0.65rem; color:#666; margin: -4px 0 14px; }
+
+    /* Small multiples layout */
+    #gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    #gallery .gallery-item {
+      flex: 0 1 calc(20% - 14px); /* ~5 per row on wide screens */
+      box-sizing: border-box;
+      margin: 0; /* gap handles spacing */
+      cursor: pointer;
+      transition: box-shadow .15s ease;
+    }
+    #gallery .gallery-item:hover {
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    #gallery .gallery-item h3 {
+      margin: 0 0 4px 0 !important;
+      font-size: 0.70rem !important;
+    }
+    #gallery .img-wrapper {
+      padding: 2px !important;
+    }
+    #gallery .img-wrapper img {
+      max-width: 100% !important;
+      width: 100% !important;
+      height: auto !important;
+    }
+    #gallery .placeholder {
+      max-width: 100% !important;
+      height: 90px !important;
+      font-size: 0.65rem !important;
+    }
+
+    /* Enlarge on click (toggle) */
+    #gallery .gallery-item.enlarged {
+      flex: 1 1 100%;
+      order: -1; /* bring enlarged to top */
+    }
+    #gallery .gallery-item.enlarged h3 {
+      font-size: 0.85rem !important;
+    }
+
+    /* Responsive tweak: fewer columns on narrow screens */
+    @media (max-width:1400px) {
+      #gallery .gallery-item { flex: 0 1 calc(25% - 14px); }
+    }
+    @media (max-width:1100px) {
+      #gallery .gallery-item { flex: 0 1 calc(33.33% - 14px); }
+    }
+    @media (max-width:800px) {
+      #gallery .gallery-item { flex: 0 1 calc(50% - 14px); }
+    }
+    @media (max-width:520px) {
+      #gallery .gallery-item { flex: 0 1 100%; }
+    }
+  </style>
+</head>
+<body>
+      <h2><a href="../../index.html">Home</a> | <a href="../../index_today.html">Today</a> | <a href="../../index_sleep.html">Sleep</a></h2>
+
+      <h1>Sleep Sleeplog Screenshots</h1>
+  <div class="controls">
+    <button id="refreshBtn">Refresh</button>
+    <label>Days
+      <input type="number" id="daysInput" min="1" max="365" value="90" style="width:70px;">
+    </label>
+    <label>End Date (optional)
+      <input type="date" id="startDateInput">
+    </label>
+    <a href="../../../index_sleep.html">Back to Sleep Page</a>
+  </div>
+  <div class="note">Newest at top (within each refresh). Click a tile to enlarge; click again to shrink. Missing = placeholder.</div>
+  <div id="gallery"></div>
+
+  <script src="../../../js/gallery_list_images.js"></script>
+  <script>
+    createScreenshotGallery({
+      mount: '#gallery',
+      controls: {
+        refreshBtn: '#refreshBtn',
+        daysInput: '#daysInput',
+        startDateInput: '#startDateInput'
+      },
+      root: 'screenshots',
+      dir1: 'index_sleep',
+      dir2: 'sleep_today_sleeplog_by_date',
+      baseName: 'sleep_today_sleeplog',
+      days: 90,
+      relativeImagePrefix: '/',    // absolute path simpler for reuse
+      maxImageWidth: 9999,         // let flex determine size
+      placeholderHeight: 90,
+      layout: 'small-multiples'    // custom flag we use below (optional)
+    });
+  </script>
+</body>
+</html>

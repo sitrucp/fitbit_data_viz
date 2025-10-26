@@ -64,7 +64,12 @@ function loadSpo2ByDateScatterData() {
                 title: {
                     text: `SpO2 (Avg: ${avgSpo2}%, Max: ${maxSpo2}%, Min: ${minSpo2}%)`,
                     x: 0.01,
-                    xanchor: 'left'
+                    xanchor: 'left',
+                    font: {
+                        size: 16, // Set font size (default is usually around 14-16)
+                        color: '#333333', // Optional: set font color
+                        family: 'Arial, sans-serif' // Optional: set font family
+                    }
                 },
                 xaxis: {
                     type: "date",

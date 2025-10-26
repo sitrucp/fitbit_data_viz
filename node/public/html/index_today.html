@@ -13,29 +13,9 @@
 <body>
     <h2><a href="index.html">Home</a> | Today | <a href="index_sleep.html">Sleep</a></h2>
     <div class="button-output-container">
-        <button onclick="runPython()">Get New Data</button>
+        <button onclick="getNewData()">Get New Data</button>
         <pre id="output"></pre>
-      </div>
-    <script>
-        function runPython() {
-            const outputElement = document.getElementById('output');
-            fetch('/run-python').then(response => {
-                const reader = response.body.getReader();
-                function read() {
-                    return reader.read().then(({ done, value }) => {
-                        if (done) {
-                            console.log('Stream completed');
-                            return;
-                        }
-                        const string = new TextDecoder().decode(value);
-                        outputElement.textContent += string;
-                        read(); // Read the next chunk of data
-                    });
-                }
-                read();
-            }).catch(error => console.error('Error:', error));
-        }
-    </script>
+    </div>
 
     <label for="start">Date:</label>
     <input type="date" id="start">
@@ -43,6 +23,7 @@
     <button onclick="changeDateRange(1)">&#x2b;</button>
     <button id="loadDataButton">Load Data</button>
 
+    <!-- NON-SLEEP METRICS SECTION -->
     <div class="grid-container">
         <div class="grid-item">
             <div class="content">
@@ -56,6 +37,32 @@
                 </ul>
             </div>
             <div id="heartRateViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Systolic BP</H3>
+                <ul class="no-bullets">
+                    <li id="systolicToday"></li>
+                    <li id="systolicMin"></li>
+                    <li id="systolicMax"></li>
+                    <li id="avg90DaySystolic"></li>
+                </ul>
+            </div>
+            <div id="systolicViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Diastolic BP</H3>
+                <ul class="no-bullets">
+                    <li id="diastolicToday"></li>
+                    <li id="diastolicMin"></li>
+                    <li id="diastolicMax"></li>
+                    <li id="avg90DayDiastolic"></li>
+                </ul>
+            </div>
+            <div id="diastolicViz" class="chart"></div>
         </div>
 
         <div class="grid-item">
@@ -90,12 +97,15 @@
             </div>
             <div id="vo2maxViz" class="chart"></div>
         </div>
+        
+        <!-- Add new non-sleep grid items here -->
     </div>
 
+    <!-- SLEEP METRICS SECTION -->
     <div class="grid-container">
         <div class="grid-item">
             <div class="content">
-                <H3 class="grid-h3">Sleep Log</H3>
+                <H3 class="grid-h3">Sleep Time</H3>
                 <ul class="no-bullets">
                     <li id="sleepMinutesAwake"></li>
                     <li id="sleepMinutesAsleep"></li>
@@ -105,6 +115,84 @@
                 </ul>
             </div>
             <div id="sleeplogViz" class="chart"></div>
+        </div>
+
+        
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">REM Sleep</H3>
+                <ul class="no-bullets">
+                    <li id="remMinutes"></li>
+                    <li id="remPercentage"></li>
+                    <li id="remHours"></li>
+                    <li id="avg90DayRem"></li>
+                </ul>
+            </div>
+            <div id="remSleepViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Deep Sleep</H3>
+                <ul class="no-bullets">
+                    <li id="deepMinutes"></li>
+                    <li id="deepPercentage"></li>
+                    <li id="deepHours"></li>
+                    <li id="avg90DayDeep"></li>
+                </ul>
+            </div>
+            <div id="deepSleepViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Light Sleep</H3>
+                <ul class="no-bullets">
+                    <li id="lightMinutes"></li>
+                    <li id="lightPercentage"></li>
+                    <li id="lightHours"></li>
+                    <li id="avg90DayLight"></li>
+                </ul>
+            </div>
+            <div id="lightSleepViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Awake Time</H3>
+                <ul class="no-bullets">
+                    <li id="totalAwakeMinutes"></li>
+                    <li id="totalAwakeHours"></li>
+                    <li id="totalAwakePercentage"></li>
+                    <li id="avg90DayTotalAwake"></li>
+                </ul>
+            </div>
+            <div id="totalAwakeViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Time in Bed</H3>
+                <ul class="no-bullets">
+                    <li id="totalTimeInBedMinutes"></li>
+                    <li id="totalTimeInBedHours"></li>
+                    <li id="avg90DayTimeInBed"></li>
+                </ul>
+            </div>
+            <div id="totalTimeInBedViz" class="chart"></div>
+        </div>
+
+        <div class="grid-item">
+            <div class="content">
+                <H3 class="grid-h3">Sleep Efficiency</H3>
+                <ul class="no-bullets">
+                    <li id="sleepEfficiency"></li>
+                    <li id="totalSleepMinutes"></li>
+                    <li id="timeInBed"></li>
+                    <li id="avg90DaySleepEfficiency"></li>
+                </ul>
+            </div>
+            <div id="sleepEfficiencyViz" class="chart"></div>
         </div>
 
         <div class="grid-item">
@@ -146,8 +234,10 @@
             </div>
             <div id="brViz" class="chart"></div>
         </div>
+
     </div>
 
+    <script src="js/get_new_data.js"></script>
     <script src="js/index_today.js"></script>
 </body>
 

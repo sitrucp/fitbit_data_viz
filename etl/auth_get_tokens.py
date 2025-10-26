@@ -1,32 +1,39 @@
 # auth_get_tokens.py
 
-import cherrypy
+"""
+Applications registered
+https://dev.fitbit.com/apps/details/22CZ7B
+
+"""
+
+import json
 import os
+import secrets  # For generating a secure, random state
 import sys
 import threading
 import webbrowser
-import secrets  # For generating a secure, random state
-import json
-from urllib.parse import urlparse, quote
-from base64 import b64encode
+from urllib.parse import quote, urlparse
+
+import cherrypy
 from fitbit.api import Fitbit
 from oauthlib.oauth2.rfc6749.errors import MismatchingStateError, MissingTokenError
 
-key_path = os.getenv('key_path')
+key_path = os.getenv("key_path")
 sys.path.insert(0, key_path)
-from config_fitbit import config_fitbit
+from config_fitbit import config_fitbit  # type: ignore  # noqa: E402
 
 client_id = config_fitbit["CLIENT_ID"]
 client_secret = config_fitbit["CLIENT_SECRET"]
 
+
 class OAuth2Server:
-    def __init__(self, client_id, client_secret, redirect_uri='http://127.0.0.1:8080/'):
-        """ Initialize the OAuth2 server with PKCE and state support """
+    def __init__(self, client_id, client_secret, redirect_uri="http://127.0.0.1:8080/"):
+        """Initialize the OAuth2 server with PKCE and state support"""
         self.client_id = client_id
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
         self.state = secrets.token_urlsafe()
-        
+
         self.success_html = """
             <h1>You are now authorized to access the Fitbit API!</h1>
             <br/><h3>You can close this window</h3>"""
@@ -46,21 +53,37 @@ class OAuth2Server:
         """
         # Construct the authorization URL manually to include the state
         scopes = [
-            "activity", "cardio_fitness", "electrocardiogram", "heartrate",
-            "location", "nutrition", "oxygen_saturation", "profile",
-            "respiratory_rate", "settings", "sleep", "social",
-            "temperature", "weight"
+            "activity",
+            "cardio_fitness",
+            "electrocardiogram",
+            "heartrate",
+            "location",
+            "nutrition",
+            "oxygen_saturation",
+            "profile",
+            "respiratory_rate",
+            "settings",
+            "sleep",
+            "social",
+            "temperature",
+            "weight",
         ]
-        
+
         scope_param = " ".join(scopes)
-        auth_url = (f"https://www.fitbit.com/oauth2/authorize?response_type=code&client_id={self.client_id}"
-                    f"&redirect_uri={quote(self.redirect_uri)}&scope={quote(scope_param)}&state={self.state}")
-        
+        auth_url = (
+            f"https://www.fitbit.com/oauth2/authorize?response_type=code&client_id={self.client_id}"
+            f"&redirect_uri={quote(self.redirect_uri)}&scope={quote(scope_param)}&state={self.state}"
+        )
+
         threading.Timer(1, webbrowser.open, args=(auth_url,)).start()
 
         urlparams = urlparse(self.redirect_uri)
-        cherrypy.config.update({'server.socket_host': urlparams.hostname,
-                                'server.socket_port': urlparams.port})
+        cherrypy.config.update(
+            {
+                "server.socket_host": urlparams.hostname,
+                "server.socket_port": urlparams.port,
+            }
+        )
 
         cherrypy.quickstart(self)
 
@@ -72,16 +95,21 @@ class OAuth2Server:
         """
         try:
             if state != self.state:
-                return self.failure_html % ("Invalid state parameter. Possible CSRF attack.", "")
-            
+                return self.failure_html % (
+                    "Invalid state parameter. Possible CSRF attack.",
+                    "",
+                )
+
             if code:
                 # Fetch the access token using the authorization code
                 token = self.fitbit.client.fetch_access_token(code)
                 # Save the token to a JSON file
-                token_filename = os.path.join(os.path.dirname(__file__), 'auth_tokens.json')
-                with open(token_filename, 'w') as token_file:
+                token_filename = os.path.join(
+                    os.path.dirname(__file__), "auth_tokens.json"
+                )
+                with open(token_filename, "w") as token_file:
                     json.dump(token, token_file, indent=4)
-                
+
                 return self.success_html
             else:
                 return self.failure_html % ("No code provided by Fitbit.", "")
@@ -90,12 +118,13 @@ class OAuth2Server:
         finally:
             # Ensure the CherryPy server is shutdown after processing the request
             self._shutdown_cherrypy()
-        
+
     def _shutdown_cherrypy(self):
-        """ Shutdown CherryPy server after a short delay """
+        """Shutdown CherryPy server after a short delay"""
         if cherrypy.engine.state == cherrypy.engine.states.STARTED:
             threading.Timer(1, cherrypy.engine.exit).start()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     server = OAuth2Server(config_fitbit["CLIENT_ID"], config_fitbit["CLIENT_SECRET"])
     server.browser_authorize()

@@ -13,30 +13,10 @@
 <body>
     <h2>Home | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a></h2>
     <div class="button-output-container">
-        <button onclick="runPython()">Get New Data</button>
+        <button onclick="getNewData()">Get New Data</button>
         <pre id="output"></pre>
     </div>
-    <script>
 
-        function runPython() {
-            const outputElement = document.getElementById('output');
-            fetch('/run-python').then(response => {
-                const reader = response.body.getReader();
-                function read() {
-                    return reader.read().then(({ done, value }) => {
-                        if (done) {
-                            console.log('Stream completed');
-                            return;
-                        }
-                        const string = new TextDecoder().decode(value);
-                        outputElement.textContent += string;
-                        read(); // Read the next chunk of data
-                    });
-                }
-                read();
-            }).catch(error => console.error('Error:', error));
-        }
-    </script>
     <ul>
         <li><a href="page_bp_by_date_scatter.html">Blood Pressure By Date - Scatter Chart</a></li>
         <li><a href="page_hr_by_date_scatter.html">Heart Rate By Datetime - Scatter Chart</a></li>
@@ -51,6 +31,7 @@
         <li><a href="page_hrv_by_date_line.html">HRV Daily Average By Date - Line Chart</a></li>
         <li><a href="page_hrv_by_date_ranges.html">HRV Ranges By Date - Bar Chart</a></li>
         <li><a href="page_sleeplog_by_date_vertical_bar.html">Sleep By Datetime - Vertical Bar Chart</a></li>
+        <li><a href="page_sleeplog_by_date_pct_lines.html">Sleep Stages By Date - Percent Line Chart</a></li>
         <li><a href="page_sleeplog_by_date_stages_100pct.html">Sleep Stages By Date - 100 % Bar Chart</a></li>
         <li><a href="page_sleeplog_by_date_stages_abs.html">Sleep Stages By Date - Absolute Bar Chart</a></li>
         <li><a href="page_steps_by_date_today.html">Steps By Date and Hour - Today Bar Chart</a></li>
@@ -60,6 +41,7 @@
         <li><a href="page_exercise_by_date_bar.html">Exercise By Date - Bar Chart</a></li>
     </ul>
 
+    <script src="js/get_new_data.js"></script>
 </body>
 
 </html>

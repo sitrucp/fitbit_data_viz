@@ -61,21 +61,25 @@ async function fetchData(url) {
     const endpoints = {
       hrDaily: `http://localhost:3000/api/hr_daily?start=${startDate}&end=${endDate}`,
       hrZones: `http://localhost:3000/api/hr_zones?start=${startDate}&end=${endDate}`,
+      bpDaily: `http://localhost:3000/api/bp_daily?start=${startDate}&end=${endDate}`,
       br: `http://localhost:3000/api/br?start=${startDate}&end=${endDate}`,
       spo2Daily: `http://localhost:3000/api/spo2_daily?start=${startDate}&end=${endDate}`,
       hrvDaily: `http://localhost:3000/api/hrv_daily?start=${startDate}&end=${endDate}`,
       sleeplogDaily: `http://localhost:3000/api/sleeplog_daily?start=${startDate}&end=${endDate}`,
+      sleeplogSummary: `http://localhost:3000/api/sleeplog_summary?start=${startDate}&end=${endDate}`,
       stepsDaily: `http://localhost:3000/api/steps_daily?start=${startDate}&end=${endDate}`,
       stepsHourly: `http://localhost:3000/api/steps_hourly?start=${startDate}&end=${endDate}`,
       vo2max: `http://localhost:3000/api/vo2max?start=${startDate}&end=${endDate}`,
       
       hrSeries: `http://localhost:3000/api/hr_daily?start=${startDateSeriesStr}&end=${endDate}`,
+      bpSeries: `http://localhost:3000/api/bp_daily?start=${startDateSeriesStr}&end=${endDate}`,
       hrvSeries: `http://localhost:3000/api/hrv_daily?start=${startDateSeriesStr}&end=${endDate}`, 
       stepsSeries: `http://localhost:3000/api/steps_daily?start=${startDateSeriesStr}&end=${endDate}`,
       stepsHourlySeries: `http://localhost:3000/api/steps_hourly?start=${startDateSeriesStr}&end=${endDate}`,
       brSeries: `http://localhost:3000/api/br?start=${startDateSeriesStr}&end=${endDate}`,
       spo2Series: `http://localhost:3000/api/spo2_daily?start=${startDateSeriesStr}&end=${endDate}`,
       sleeplogSeries: `http://localhost:3000/api/sleeplog_daily?start=${startDateSeriesStr}&end=${endDate}`,
+      sleeplogSummarySeries: `http://localhost:3000/api/sleeplog_summary?start=${startDateSeriesStr}&end=${endDate}`,
       vo2maxSeries: `http://localhost:3000/api/vo2max?start=${startDateSeriesStr}&end=${endDate}`,
       // Add more API endpoints as needed, each with a descriptive key
     };
@@ -197,18 +201,41 @@ async function fetchData(url) {
 
 // Helper function to calculate trend line data
 function calculateTrendLine(data) {
-    const n = data.length;
+    // Filter out null values and keep track of their indices
+    const validData = [];
+    const validIndices = [];
+    
+    data.forEach((value, index) => {
+        if (value !== null && value !== undefined && !isNaN(value)) {
+            validData.push(value);
+            validIndices.push(index);
+        }
+    });
+    
+    if (validData.length < 2) {
+        // Not enough data points for trend line, return array of nulls
+        return data.map(() => null);
+    }
+    
+    const n = validData.length;
     let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-    data.forEach((y, i) => {
-        const x = i + 1;
+    
+    validData.forEach((y, i) => {
+        const x = validIndices[i] + 1; // Use original index position
         sumX += x;
         sumY += y;
         sumXY += x * y;
         sumXX += x * x;
     });
+    
     const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
     const intercept = (sumY - slope * sumX) / n;
-    return data.map((_, i) => {
+    
+    // Generate trend line for all data points (including nulls)
+    return data.map((originalValue, i) => {
+        if (originalValue === null || originalValue === undefined || isNaN(originalValue)) {
+            return null; // Keep nulls as nulls
+        }
         const trendValue = slope * (i + 1) + intercept;
         return Math.round(trendValue * 10) / 10; // Round to one decimal point
     });
@@ -225,6 +252,60 @@ function updatePageContent(data) {
       document.getElementById("avg90DayRHR").textContent = `90 Day Avg RHR: ${avg90DayRHR}`;
     } else {
       console.error("HR series data is unexpected or empty");
+    }
+
+    //console.log("BP Series raw data:", data.bpSeries);
+    if (data.bpSeries && data.bpSeries.length > 0) {
+      // Filter blood pressure data to only include pharmacy device readings
+      const pharmacyBpData = data.bpSeries.filter(x => x.device === "pharmacy");
+      //console.log("Filtered pharmacy BP series data:", pharmacyBpData);
+      
+      if (pharmacyBpData.length > 0) {
+        // Generate full 90-day date range
+        const today = new Date();
+        const startDate = new Date(today);
+        startDate.setDate(startDate.getDate() - 90);
+        
+        const fullDateRange = [];
+        for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+          fullDateRange.push(d.toISOString().substring(0, 10));
+        }
+        
+        //console.log("Full 90-day date range:", fullDateRange.length, "days");
+        //console.log("Available BP data days:", pharmacyBpData.length, "days");
+        
+        // Map BP data to full date range, filling gaps with null
+        const systolicDataFull = fullDateRange.map(date => {
+          const dataPoint = pharmacyBpData.find(x => x.date === date);
+          return dataPoint ? parseFloat(dataPoint.systolic.avg || 0) : null;
+        });
+        
+        const diastolicDataFull = fullDateRange.map(date => {
+          const dataPoint = pharmacyBpData.find(x => x.date === date);
+          return dataPoint ? parseFloat(dataPoint.diastolic.avg || 0) : null;
+        });
+        
+        //console.log("Systolic data with gaps:", systolicDataFull.filter(x => x !== null).length, "non-null values");
+        //console.log("Diastolic data with gaps:", diastolicDataFull.filter(x => x !== null).length, "non-null values");
+        
+        // Systolic Blood Pressure Chart
+        createChart("systolicViz", fullDateRange, systolicDataFull, "90 Day Systolic BP", 90);
+        const totalSystolic = systolicDataFull.filter(x => x !== null).reduce((acc, curr) => acc + curr, 0);
+        const validSystolicDays = systolicDataFull.filter(x => x !== null).length;
+        const avg90DaySystolic = validSystolicDays > 0 ? parseFloat((totalSystolic / validSystolicDays).toFixed(1)) : 0;
+        document.getElementById("avg90DaySystolic").textContent = `90 Day Avg Systolic: ${avg90DaySystolic}`;
+        
+        // Diastolic Blood Pressure Chart
+        createChart("diastolicViz", fullDateRange, diastolicDataFull, "90 Day Diastolic BP", 60);
+        const totalDiastolic = diastolicDataFull.filter(x => x !== null).reduce((acc, curr) => acc + curr, 0);
+        const validDiastolicDays = diastolicDataFull.filter(x => x !== null).length;
+        const avg90DayDiastolic = validDiastolicDays > 0 ? parseFloat((totalDiastolic / validDiastolicDays).toFixed(1)) : 0;
+        document.getElementById("avg90DayDiastolic").textContent = `90 Day Avg Diastolic: ${avg90DayDiastolic}`;
+      } else {
+        console.log("No pharmacy blood pressure data available for charts. Available devices:", data.bpSeries.map(x => x.device));
+      }
+    } else {
+      console.error("BP series data is unexpected or empty");
     }
   
     if (data.stepsSeries && data.stepsSeries.length > 0) {
@@ -313,13 +394,76 @@ function updatePageContent(data) {
       if (data.sleeplogSeries && data.sleeplogSeries.length > 0) {
         const sleeplogDate = data.sleeplogSeries.map((x) => x.date);
         const sleeplogData = data.sleeplogSeries.map((x) => parseFloat((x.minutesAsleep / 60).toFixed(1))); 
-        createChart("sleeplogViz", sleeplogDate, sleeplogData, "90 Day Hours Asleep", 0);
+        createChart("sleeplogViz", sleeplogDate, sleeplogData, "90 Day Sleep Time (Hours)", 0);
         // Calculate avg90DayminutesAsleep
         const totalAsleep = sleeplogData.reduce((acc, curr) => acc + parseFloat(curr || 0), 1);
         const avgMinutesAsleep = parseFloat(((totalAsleep * 60) / sleeplogData.length).toFixed(1));
         document.getElementById("avg90DayMinutesAsleep").textContent = `90 Day Avg Asleep: ${formatMinutesToHours(avgMinutesAsleep)}`;
       } else {
         console.error("Sleep series data is unexpected or empty");
+      }
+
+      if (data.sleeplogSeries && data.sleeplogSeries.length > 0) {
+        // Sleep efficiency verification is no longer needed since we're using our own calculation
+        console.log("Using calculated sleep efficiency: (minutesAsleep / timeInBed) * 100");
+        console.log(`Total sleep records processed: ${data.sleeplogSeries.length}`);
+        
+        const sleepEfficiencyDate = data.sleeplogSeries.map((x) => x.date);
+        // Use our own calculation: (minutesAsleep / timeInBed) * 100
+        const sleepEfficiencyData = data.sleeplogSeries.map((x) => {
+          return x.timeInBed > 0 ? parseFloat(((x.minutesAsleep / x.timeInBed) * 100).toFixed(1)) : 0;
+        }); 
+        createChart("sleepEfficiencyViz", sleepEfficiencyDate, sleepEfficiencyData, "90 Day Sleep Efficiency % (Calculated)", 70);
+        // Calculate avg90DaySleepEfficiency using our calculation
+        const totalEfficiency = sleepEfficiencyData.reduce((acc, curr) => acc + parseFloat(curr || 0), 0);
+        const avg90DaySleepEfficiency = parseFloat((totalEfficiency / sleepEfficiencyData.length).toFixed(1));
+        document.getElementById("avg90DaySleepEfficiency").textContent = `90 Day Avg Efficiency: ${avg90DaySleepEfficiency}%`;
+
+        // Total Awake Chart (using minutesAwake from sleeplogSeries)
+        const totalAwakeData = data.sleeplogSeries.map((x) => parseFloat((x.minutesAwake || 0) / 60));
+        createChart("totalAwakeViz", sleepEfficiencyDate, totalAwakeData, "90 Day Awake Time (Hours)", 0);
+        const totalAwakeSum = totalAwakeData.reduce((acc, curr) => acc + parseFloat(curr || 0), 0);
+        const avg90DayTotalAwake = parseFloat((totalAwakeSum / totalAwakeData.length).toFixed(1));
+        document.getElementById("avg90DayTotalAwake").textContent = `90 Day Avg Awake: ${avg90DayTotalAwake}h`;
+
+        // Total Time in Bed Chart
+        const totalTimeInBedData = data.sleeplogSeries.map((x) => parseFloat((x.timeInBed || 0) / 60));
+        createChart("totalTimeInBedViz", sleepEfficiencyDate, totalTimeInBedData, "90 Day Time in Bed (Hours)", 6);
+        const totalTimeInBedSum = totalTimeInBedData.reduce((acc, curr) => acc + parseFloat(curr || 0), 0);
+        const avg90DayTimeInBed = parseFloat((totalTimeInBedSum / totalTimeInBedData.length).toFixed(1));
+        document.getElementById("avg90DayTimeInBed").textContent = `90 Day Avg Time in Bed: ${avg90DayTimeInBed}h`;
+      } else {
+        console.error("Sleep efficiency series data is unexpected or empty");
+      }
+
+      // Sleep Stage Charts
+      if (data.sleeplogSummarySeries && data.sleeplogSummarySeries.length > 0) {
+        const sleepStageDate = data.sleeplogSummarySeries.map((x) => x.date);
+        
+        // REM Sleep Chart
+        const remData = data.sleeplogSummarySeries.map((x) => parseFloat((x.minutesRem || 0) / 60)); 
+        createChart("remSleepViz", sleepStageDate, remData, "90 Day REM Sleep (Hours)", 0);
+        const totalRem = remData.reduce((acc, curr) => acc + parseFloat(curr || 0), 0);
+        const avgRem = parseFloat((totalRem / remData.length).toFixed(1));
+        document.getElementById("avg90DayRem").textContent = `90 Day Avg REM: ${avgRem}h`;
+        
+        // Deep Sleep Chart
+        const deepData = data.sleeplogSummarySeries.map((x) => parseFloat((x.minutesDeep || 0) / 60)); 
+        createChart("deepSleepViz", sleepStageDate, deepData, "90 Day Deep Sleep (Hours)", 0);
+        const totalDeep = deepData.reduce((acc, curr) => acc + parseFloat(curr || 0), 0);
+        const avgDeep = parseFloat((totalDeep / deepData.length).toFixed(1));
+        document.getElementById("avg90DayDeep").textContent = `90 Day Avg Deep: ${avgDeep}h`;
+        
+        // Light Sleep Chart
+        const lightData = data.sleeplogSummarySeries.map((x) => parseFloat((x.minutesLight || 0) / 60)); 
+        createChart("lightSleepViz", sleepStageDate, lightData, "90 Day Light Sleep (Hours)", 0);
+        const totalLight = lightData.reduce((acc, curr) => acc + parseFloat(curr || 0), 0);
+        const avgLight = parseFloat((totalLight / lightData.length).toFixed(1));
+        document.getElementById("avg90DayLight").textContent = `90 Day Avg Light: ${avgLight}h`;
+        
+
+      } else {
+        console.error("Sleep summary series data is unexpected or empty");
       }
       
 
@@ -329,6 +473,48 @@ function updatePageContent(data) {
       document.getElementById("dailyAverage").textContent = `Average Heart Rate: ${data.hrDaily[0].dailyAverage}`;
       document.getElementById("dailyMax").textContent = `Max Heart Rate: ${data.hrDaily[0].dailyMax}`;
       document.getElementById("dailyMin").textContent = `Min Heart Rate: ${data.hrDaily[0].dailyMin}`;
+    }
+
+    // Blood Pressure - Use most recent reading from series data
+    //console.log("BP Series raw data:", data.bpSeries);
+    if (data.bpSeries && data.bpSeries.length > 0) {
+      // Filter blood pressure data to only include pharmacy device readings
+      const pharmacyBpSeries = data.bpSeries.filter(x => x.device === "pharmacy");
+      //console.log("Filtered pharmacy BP series data:", pharmacyBpSeries);
+      
+      if (pharmacyBpSeries.length > 0) {
+        // Sort by date to get most recent reading (series data should already be sorted)
+        const mostRecentBp = pharmacyBpSeries[pharmacyBpSeries.length - 1];
+        //console.log("Most recent pharmacy BP data:", mostRecentBp);
+        
+        // Most Recent Blood Pressure Values
+        document.getElementById("systolicToday").textContent = `Systolic: ${mostRecentBp.systolic.avg}`;
+        document.getElementById("diastolicToday").textContent = `Diastolic: ${mostRecentBp.diastolic.avg}`;
+        
+        // Most Recent Day's Min/Max
+        document.getElementById("systolicMin").textContent = `Systolic Min: ${mostRecentBp.systolic.min}`;
+        document.getElementById("systolicMax").textContent = `Systolic Max: ${mostRecentBp.systolic.max}`;
+        document.getElementById("diastolicMin").textContent = `Diastolic Min: ${mostRecentBp.diastolic.min}`;
+        document.getElementById("diastolicMax").textContent = `Diastolic Max: ${mostRecentBp.diastolic.max}`;
+      } else {
+        console.log("No pharmacy BP data found in series. Available devices:", data.bpSeries.map(x => x.device));
+        // No pharmacy data available
+        document.getElementById("systolicToday").textContent = `Systolic: N/A`;
+        document.getElementById("diastolicToday").textContent = `Diastolic: N/A`;
+        document.getElementById("systolicMin").textContent = `Systolic Min: N/A`;
+        document.getElementById("systolicMax").textContent = `Systolic Max: N/A`;
+        document.getElementById("diastolicMin").textContent = `Diastolic Min: N/A`;
+        document.getElementById("diastolicMax").textContent = `Diastolic Max: N/A`;
+      }
+    } else {
+      console.log("No BP series data available at all");
+      // No BP data available
+      document.getElementById("systolicToday").textContent = `Systolic: N/A`;
+      document.getElementById("diastolicToday").textContent = `Diastolic: N/A`;
+      document.getElementById("systolicMin").textContent = `Systolic Min: N/A`;
+      document.getElementById("systolicMax").textContent = `Systolic Max: N/A`;
+      document.getElementById("diastolicMin").textContent = `Diastolic Min: N/A`;
+      document.getElementById("diastolicMax").textContent = `Diastolic Max: N/A`;
     }
   
     // Steps Daily
@@ -386,6 +572,70 @@ function updatePageContent(data) {
           document.getElementById("sleepStartTime").textContent = `Start: ${formatDateTime(data.sleeplogDaily[0].startTime)}`;
           document.getElementById("sleepEndTime").textContent = `End: ${formatDateTime(data.sleeplogDaily[0].endTime)}`;
       }
+
+    // Sleep Efficiency
+    if (data.sleeplogDaily && data.sleeplogDaily.length > 0) {
+        // Calculate our own efficiency: (minutesAsleep / timeInBed) * 100
+        const calculatedEfficiency = data.sleeplogDaily[0].timeInBed > 0 ? 
+          Math.round((data.sleeplogDaily[0].minutesAsleep / data.sleeplogDaily[0].timeInBed) * 100) : 0;
+        document.getElementById("sleepEfficiency").textContent = `Sleep Efficiency: ${calculatedEfficiency}%`;
+        document.getElementById("timeInBed").textContent = `Time in Bed: ${formatMinutesToHours(data.sleeplogDaily[0].timeInBed)}`;
+
+        // Total Awake Data
+        const totalAwakeMinutes = data.sleeplogDaily[0].minutesAwake || 0;
+        const totalTimeInBedMinutes = data.sleeplogDaily[0].timeInBed || 0;
+        const awakePercentageOfBed = totalTimeInBedMinutes > 0 ? ((totalAwakeMinutes / totalTimeInBedMinutes) * 100).toFixed(1) : 0;
+        
+        document.getElementById("totalAwakeMinutes").textContent = `Awake Minutes: ${totalAwakeMinutes}`;
+        document.getElementById("totalAwakeHours").textContent = `Awake Time: ${formatMinutesToHours(totalAwakeMinutes)}`;
+        document.getElementById("totalAwakePercentage").textContent = `Awake %: ${awakePercentageOfBed}%`;
+
+        // Total Time in Bed Data
+        const targetSleep = 8 * 60; // 8 hours in minutes
+        const bedTimeVsTarget = totalTimeInBedMinutes - targetSleep;
+        const bedTimeTargetText = bedTimeVsTarget >= 0 ? `+${formatMinutesToHours(bedTimeVsTarget)}` : `${formatMinutesToHours(bedTimeVsTarget)}`;
+        
+        document.getElementById("totalTimeInBedMinutes").textContent = `Bed Minutes: ${totalTimeInBedMinutes}`;
+        document.getElementById("totalTimeInBedHours").textContent = `Bed Time: ${formatMinutesToHours(totalTimeInBedMinutes)}`;
+    }
+
+    if (data.sleeplogSummary && data.sleeplogSummary.length > 0) {
+        // Calculate custom sleep efficiency from sleep stages
+        const summary = data.sleeplogSummary[0];
+        const totalSleepMinutes = (summary.minutesDeep || 0) + (summary.minutesLight || 0) + (summary.minutesRem || 0);
+        const totalTimeInBed = totalSleepMinutes + (summary.minutesAwake || 0);
+        const customEfficiency = totalTimeInBed > 0 ? ((totalSleepMinutes / totalTimeInBed) * 100).toFixed(1) : 0;
+
+        document.getElementById("totalSleepMinutes").textContent = `Total Sleep: ${formatMinutesToHours(totalSleepMinutes)}`;
+
+        // REM Sleep Stage Data
+        const remMinutes = summary.minutesRem || 0;
+        const remPercentage = totalSleepMinutes > 0 ? ((remMinutes / totalSleepMinutes) * 100).toFixed(1) : 0;
+        document.getElementById("remMinutes").textContent = `REM Minutes: ${remMinutes}`;
+        document.getElementById("remPercentage").textContent = `REM %: ${remPercentage}%`;
+        document.getElementById("remHours").textContent = `REM Time: ${formatMinutesToHours(remMinutes)}`;
+
+        // Deep Sleep Stage Data
+        const deepMinutes = summary.minutesDeep || 0;
+        const deepPercentage = totalSleepMinutes > 0 ? ((deepMinutes / totalSleepMinutes) * 100).toFixed(1) : 0;
+        document.getElementById("deepMinutes").textContent = `Deep Minutes: ${deepMinutes}`;
+        document.getElementById("deepPercentage").textContent = `Deep %: ${deepPercentage}%`;
+        document.getElementById("deepHours").textContent = `Deep Time: ${formatMinutesToHours(deepMinutes)}`;
+
+        // Light Sleep Stage Data
+        const lightMinutes = summary.minutesLight || 0;
+        const lightPercentage = totalSleepMinutes > 0 ? ((lightMinutes / totalSleepMinutes) * 100).toFixed(1) : 0;
+        document.getElementById("lightMinutes").textContent = `Light Minutes: ${lightMinutes}`;
+        document.getElementById("lightPercentage").textContent = `Light %: ${lightPercentage}%`;
+        document.getElementById("lightHours").textContent = `Light Time: ${formatMinutesToHours(lightMinutes)}`;
+
+        // Awake Time Data
+        const awakeMinutes = summary.minutesAwake || 0;
+        const awakePercentage = totalTimeInBed > 0 ? ((awakeMinutes / totalTimeInBed) * 100).toFixed(1) : 0;
+        document.getElementById("totalAwakeMinutes").textContent = `Awake Minutes: ${awakeMinutes}`;
+        document.getElementById("totalAwakePercentage").textContent = `Awake %: ${awakePercentage}%`;
+        document.getElementById("totalAwakeHours").textContent = `Awake Time: ${formatMinutesToHours(awakeMinutes)}`;
+    }
 
     // spo2 chart spo2 by dateTime line visual sparkline
     // TBD  

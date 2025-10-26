@@ -11,7 +11,13 @@
 
 <body>
     <h2><a href="index.html">Home</a> | Heart Rate By Date - Scatter Chart With Zone Colors | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a></h2>
-
+    
+    <div class="button-output-container">
+        <button onclick="getNewData()">Get New Data</button>
+        <button onclick="exportCSV()">Export CSV</button> <!-- Add this line -->
+        <pre id="output"></pre>
+    </div>
+    
     <label for="start">Start Date:</label>
     <input type="date" id="start">
     <label for="end">End Date:</label>
@@ -35,18 +41,34 @@
             loadData();  // Initial update to draw all charts based on the default selection
         };
 
+        // Store summary data for export
+        let summaryRows = [];
+
+        // Helper function to format time values in hh:mm format
+        function formatTimeValue(hours) {
+            const totalMinutes = Math.round(hours * 60);
+            const h = Math.floor(totalMinutes / 60);
+            const m = totalMinutes % 60;
+            return `${h}:${m.toString().padStart(2, '0')}`;
+        }
+
         function loadData() {
             const startDate = document.getElementById('start').value;
             const endDate = document.getElementById('end').value;
 
             fetch(`http://localhost:3000/api/hr?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
-                .then(data => {
+                .then(responseData => {
+                    const data = responseData.heartRateData;
+                    const mafData = responseData.mafData;
+                    
                     const dates = data.map(item => new Date(item.dateTime));
                     const heartRates = data.map(item => item.heartRate);
                     const restingHeartRates = data.map(item => item.restingHeartRate);
 
                     console.log('heartRates:', heartRates);
+                    console.log('Total data points:', heartRates.length);
+                    console.log('Date range:', dates[0], 'to', dates[dates.length - 1]);
                    
                     // Calculate maximum and minimum values
                     const maxHeartRate = parseFloat(Math.max(...heartRates).toFixed(1));
@@ -61,6 +83,27 @@
                     const zone2UpperLimit = 118; // Fat Burn
                     const zone3UpperLimit = 145; // Cardio
                     const zone4UpperLimit = 162; // Peak
+
+                    // Calculate hours in each zone (converting from data points to hours)
+                    // First, determine the time interval between data points
+                    const totalDataPoints = heartRates.length;
+                    const startTime = new Date(dates[0]);
+                    const endTime = new Date(dates[dates.length - 1]);
+                    const totalMinutes = (endTime - startTime) / (1000 * 60); // Convert milliseconds to minutes
+                    const minutesPerDataPoint = totalDataPoints > 1 ? totalMinutes / (totalDataPoints - 1) : 1;
+                    
+                    console.log('Total minutes in range:', totalMinutes);
+                    console.log('Minutes per data point:', minutesPerDataPoint);
+                    
+                    const normalMinutes = heartRates.filter(rate => rate < zone1UpperLimit).length;
+                    const fatBurnMinutes = heartRates.filter(rate => rate >= zone1UpperLimit && rate < zone2UpperLimit).length;
+                    const cardioMinutes = heartRates.filter(rate => rate >= zone2UpperLimit && rate < zone3UpperLimit).length;
+                    const peakMinutes = heartRates.filter(rate => rate >= zone3UpperLimit).length;
+
+                    const normalHours = parseFloat((normalMinutes * minutesPerDataPoint / 60).toFixed(2));
+                    const fatBurnHours = parseFloat((fatBurnMinutes * minutesPerDataPoint / 60).toFixed(2));
+                    const cardioHours = parseFloat((cardioMinutes * minutesPerDataPoint / 60).toFixed(2));
+                    const peakHours = parseFloat((peakMinutes * minutesPerDataPoint / 60).toFixed(2));
 
                     //console.log('zone1UpperLimit Normal', zone1UpperLimit, 'zone2UpperLimit Fat Burn',zone2UpperLimit,'zone3UpperLimit Cardio', zone3UpperLimit,'zone4UpperLimit Peak',zone4UpperLimit);
 
@@ -79,6 +122,7 @@
                         type: 'scatter',
                         name: 'Heart Rate',
                         marker: { color: heartRateColors, size: 5 },
+                        showlegend: false // Hide from legend since we'll show zones instead
                     };
 
                     var trace2 = {
@@ -91,6 +135,47 @@
                             color: "rgba(255, 99, 132, 1)", // pink
                             dash: "dash",
                         },
+                    };
+
+                    // Create invisible traces for heart rate zones (legend only)
+                    var traceZone1 = {
+                        x: [null],
+                        y: [null],
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: 'Normal (< 96 bpm)',
+                        marker: { color: 'rgb(0, 128, 128)', size: 8 },
+                        showlegend: true
+                    };
+
+                    var traceZone2 = {
+                        x: [null],
+                        y: [null],
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: 'Fat Burn (96-118 bpm)',
+                        marker: { color: 'rgb(252, 191, 73)', size: 8 },
+                        showlegend: true
+                    };
+
+                    var traceZone3 = {
+                        x: [null],
+                        y: [null],
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: 'Cardio (118-145 bpm)',
+                        marker: { color: 'rgb(247, 127, 0)', size: 8 },
+                        showlegend: true
+                    };
+
+                    var traceZone4 = {
+                        x: [null],
+                        y: [null],
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: 'Peak (> 145 bpm)',
+                        marker: { color: 'rgb(214, 40, 40)', size: 8 },
+                        showlegend: true
                     };
 
                     var layout = {
@@ -117,8 +202,8 @@
                         annotations: [{
                             xref: 'paper',
                             yref: 'paper',
-                            x: 0.95,
-                            xanchor: 'right',
+                            x: 0.05,
+                            xanchor: 'left',
                             y: 1.05,
                             yanchor: 'bottom',
                             text: `Max HR: ${maxHeartRate} bpm`,
@@ -126,8 +211,8 @@
                         }, {
                             xref: 'paper',
                             yref: 'paper',
-                            x: 0.95,
-                            xanchor: 'right',
+                            x: 0.05,
+                            xanchor: 'left',
                             y: 1,
                             yanchor: 'bottom',
                             text: `Min HR: ${minHeartRate} bpm`,
@@ -135,8 +220,8 @@
                         }, {
                             xref: 'paper',
                             yref: 'paper',
-                            x: 0.95,
-                            xanchor: 'right',
+                            x: 0.05,
+                            xanchor: 'left',
                             y: .95,
                             yanchor: 'bottom',
                             text: `Avg HR: ${avgHr} bpm`,
@@ -144,22 +229,179 @@
                         }, {
                             xref: 'paper',
                             yref: 'paper',
-                            x: 0.95,
-                            xanchor: 'right',
+                            x: 0.05,
+                            xanchor: 'left',
                             y: .90,
                             yanchor: 'bottom',
                             text: `RHR: ${restingHeartRates[0]} bpm`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.05,
+                            xanchor: 'left',
+                            y: .83,
+                            yanchor: 'bottom',
+                            text: `Normal: ${formatTimeValue(normalHours)}`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.05,
+                            xanchor: 'left',
+                            y: .78,
+                            yanchor: 'bottom',
+                            text: `Fat Burn: ${formatTimeValue(fatBurnHours)}`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.05,
+                            xanchor: 'left',
+                            y: .73,
+                            yanchor: 'bottom',
+                            text: `Cardio: ${formatTimeValue(cardioHours)}`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.05,
+                            xanchor: 'left',
+                            y: .68,
+                            yanchor: 'bottom',
+                            text: `Peak: ${formatTimeValue(peakHours)}`,
+                            showarrow: false
+                        }, {
+                            xref: 'paper',
+                            yref: 'paper',
+                            x: 0.05,
+                            xanchor: 'left',
+                            y: .60,
+                            yanchor: 'bottom',
+                            text: `MAF Zone (${mafData.mafLowerBound}-${mafData.mafHR}): ${formatTimeValue(mafData.mafZoneHours)}`,
                             showarrow: false
                         }],
                         autosize: true
                     };
 
-                    Plotly.newPlot('hr_by_date', [trace1, trace2], layout);
+                    const config = {
+                        displayModeBar: true,
+                        modeBarButtonsToAdd: [],
+                        toImageButtonOptions: {
+                            format: 'png', // one of png, svg, jpeg, webp
+                            filename: `heart_rate_${startDate}_to_${endDate}`,
+                            height: 600,
+                            width: 1200,
+                            scale: 2 // Multiply title/legend/axis/canvas sizes by this factor
+                        }
+                    };
+
+                    // --- CSV summary data collection ---
+                    // Group data by date
+                    const dataByDate = {};
+                    data.forEach(item => {
+                        const date = item.dateTime.split('T')[0];
+                        if (!dataByDate[date]) dataByDate[date] = [];
+                        dataByDate[date].push(item);
+                    });
+
+                    // Prepare MAF zone header with range
+                    const mafLower = mafData.mafLowerBound;
+                    const mafUpper = mafData.mafHR;
+                    const mafZoneHeader = `MAF Zone Hours (${mafLower}-${mafUpper})`;
+
+                    summaryRows = [];
+                    Object.keys(dataByDate).forEach(date => {
+                        const items = dataByDate[date];
+                        const heartRates = items.map(i => i.heartRate);
+                        const restingHeartRates = items.map(i => i.restingHeartRate);
+
+                        const maxHeartRate = parseFloat(Math.max(...heartRates).toFixed(1));
+                        const minHeartRate = parseFloat(Math.min(...heartRates).toFixed(1));
+                        const avgHr = parseFloat((heartRates.reduce((a, b) => a + b, 0) / heartRates.length).toFixed(1));
+                        const rhr = restingHeartRates[0];
+
+                        // Zone thresholds
+                        const zone1UpperLimit = 96;
+                        const zone2UpperLimit = 118;
+                        const zone3UpperLimit = 145;
+
+                        const totalDataPoints = heartRates.length;
+                        const startTime = new Date(items[0].dateTime);
+                        const endTime = new Date(items[items.length - 1].dateTime);
+                        const totalMinutes = (endTime - startTime) / (1000 * 60);
+                        const minutesPerDataPoint = totalDataPoints > 1 ? totalMinutes / (totalDataPoints - 1) : 1;
+
+                        const normalMinutes = heartRates.filter(rate => rate < zone1UpperLimit).length;
+                        const fatBurnMinutes = heartRates.filter(rate => rate >= zone1UpperLimit && rate < zone2UpperLimit).length;
+                        const cardioMinutes = heartRates.filter(rate => rate >= zone2UpperLimit && rate < zone3UpperLimit).length;
+                        const peakMinutes = heartRates.filter(rate => rate >= zone3UpperLimit).length;
+
+                        const normalHours = parseFloat((normalMinutes * minutesPerDataPoint / 60).toFixed(2));
+                        const fatBurnHours = parseFloat((fatBurnMinutes * minutesPerDataPoint / 60).toFixed(2));
+                        const cardioHours = parseFloat((cardioMinutes * minutesPerDataPoint / 60).toFixed(2));
+                        const peakHours = parseFloat((peakMinutes * minutesPerDataPoint / 60).toFixed(2));
+
+                        // MAF zone hours (same for all dates in range)
+                        const mafZoneHours = mafData.mafZoneHours;
+
+                        summaryRows.push({
+                            Date: date,
+                            'Max HR': maxHeartRate,
+                            'Min HR': minHeartRate,
+                            'Avg HR': avgHr,
+                            'RHR': rhr,
+                            'Normal Time': formatTimeValue(normalHours),
+                            'Fat Burn Time': formatTimeValue(fatBurnHours),
+                            'Cardio Time': formatTimeValue(cardioHours),
+                            'Peak Time': formatTimeValue(peakHours),
+                            [mafZoneHeader]: formatTimeValue(mafZoneHours)
+                        });
+                    });
+
+                    Plotly.newPlot('hr_by_date', [trace1, trace2, traceZone1, traceZone2, traceZone3, traceZone4], layout, config);
                 })
                 .catch(error => {
                     console.error('Error loading data:', error);
                     alert('An error occurred while loading the data. Please try again.');
                 });
+        }
+
+        // CSV export utility
+        function exportCSV() {
+            if (!summaryRows || summaryRows.length === 0) {
+                alert('No summary data to export. Please load data first.');
+                return;
+            }
+            // Get the dynamic MAF zone header from the first row
+            const mafZoneHeader = Object.keys(summaryRows[0]).find(h => h.startsWith('MAF Zone Hours'));
+            const headers = [
+                'Date',
+                'Max HR',
+                'Min HR',
+                'Avg HR',
+                'RHR',
+                'Normal Time',
+                'Fat Burn Time',
+                'Cardio Time',
+                'Peak Time',
+                mafZoneHeader
+            ];
+            const csvRows = [];
+            csvRows.push(headers.join(','));
+            summaryRows.forEach(row => {
+                csvRows.push(headers.map(h => row[h]).join(','));
+            });
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hr_summary_${document.getElementById('start').value}_to_${document.getElementById('end').value}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         function changeDateRange(days) {

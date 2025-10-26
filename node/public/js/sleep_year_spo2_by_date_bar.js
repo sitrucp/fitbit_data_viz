@@ -1,26 +1,26 @@
-// USE SLEEP LOG DATA in node\public\js\sleep_today_sleeplog_by_date_bar.js 
+// USE SLEEP LOG DATA in node\public\js\sleep_today_sleeplog_by_date_bar.js
 // TO DEFINE START AND END DATETIME FOR ALL SLEEP CHARTS
 // PASS START AND END DATETIME TO OTHER SLEEP CHARTS VIA setGlobalSleepChartDateRange
-// 
+//
 
 // Flag to indicate first load
 let isFirstLoadSpO2 = true;
 
 function loadSpo2ByDateBarData() {
-    let startDate, endDate;
-    
-    if (isFirstLoadSpO2) {
-        // Default date for the first load
-        endDate = new Date(); // Today
-        startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - 365); // Set start 365 days earlier than today
-        isFirstLoadSpO2 = false;
-    } else {
-        // Get date from the input field after the first load
-        endDate = new Date(document.getElementById("start").value);
-        startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - 365); // Set start 365 days earlier than selected date
-    }
+  let startDate, endDate;
+
+  if (isFirstLoadSpO2) {
+    // Default date for the first load
+    endDate = new Date(); // Today
+    startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - 365); // Set start 365 days earlier than today
+    isFirstLoadSpO2 = false;
+  } else {
+    // Get date from the input field after the first load
+    endDate = new Date(document.getElementById("start").value);
+    startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - 365); // Set start 365 days earlier than selected date
+  }
 
   fetch(`http://localhost:3000/api/spo2?start=${startDate}&end=${endDate}`)
     .then((response) => response.json())
@@ -49,7 +49,7 @@ function loadSpo2ByDateBarData() {
         dailyData[dateStr].dailyAverage += item.spo2;
         dailyData[dateStr].dailyTotal++;
       });
-      
+
       // Prepare plot data
       const dates = [];
       const percentAbove = [];
@@ -76,18 +76,18 @@ function loadSpo2ByDateBarData() {
           y: percentAbove,
           name: "Above Desired Minimum",
           type: "bar",
-          marker: { 
-            color: 'rgba(0, 128, 128, 0.7)',  // teal
-         }
+          marker: {
+            color: "rgba(0, 128, 128, 0.7)", // teal
+          },
         },
         {
           x: dates,
           y: percentBelow,
           name: "Below Desired Minimum",
           type: "bar",
-          marker: { 
-            color: 'rgba(247, 127, 0, 0.7)',  // Cardio orange
-         }
+          marker: {
+            color: "rgba(247, 127, 0, 0.7)", // Cardio orange
+          },
         },
         {
           x: dates,
@@ -105,6 +105,11 @@ function loadSpo2ByDateBarData() {
           text: "Spo2 By Date - Relative to 95% Goal (PW2 > 2024-04-05)",
           x: 0.01, // Aligns the title to the left
           xanchor: "left", // Anchors the title text to the left edge of its container
+          font: {
+            size: 16, // Set font size (default is usually around 14-16)
+            color: "#333333", // Optional: set font color
+            family: "Arial, sans-serif", // Optional: set font family
+          },
         },
         xaxis: {
           type: "date",

@@ -80,6 +80,11 @@ function loadHrvByDateAreaData() {
           text: "HRV By Date - RMSSD Ranges",
           x: 0.01, // Aligns the title to the left
           xanchor: "left", // Anchors the title text to the left edge of its container
+          font: {
+            size: 16, // Set font size (default is usually around 14-16)
+            color: "#333333", // Optional: set font color
+            family: "Arial, sans-serif", // Optional: set font family
+          },
         },
         xaxis: {
           title: "", // Simplify or remove if not needed

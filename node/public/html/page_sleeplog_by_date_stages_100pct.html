@@ -11,8 +11,14 @@
 
 <body>
     <h2><a href="index.html">Home</a> | Sleep Stages By Date - 100% Chart - <a
-            href="page_sleeplog_by_date_stages_abs.html">Absolute Chart</a> | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a></h2>
-
+            href="page_sleeplog_by_date_stages_abs.html">Absolute Chart</a> | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a>
+    </h2>
+    
+    <div class="button-output-container">
+        <button onclick="getNewData()">Get New Data</button>
+        <pre id="output"></pre>
+    </div>
+    
     <label for="start">Start Date:</label>
     <input type="date" id="start">
     <label for="end">End Date:</label>

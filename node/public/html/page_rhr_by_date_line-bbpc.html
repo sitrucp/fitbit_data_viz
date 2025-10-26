@@ -3,20 +3,20 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>SpO2 By Date Scatter</title>
+    <title>Resting Heart Rate By Date</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="css/pages.css">
     <link rel="shortcut icon" href="../favicons/favicon.ico">
 </head>
 
 <body>
-    <h2><a href="index.html">Home</a> | HRV (RMSSD) Daily Average By Date | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a></h2>
+    <h2><a href="index.html">Home</a> | Resting Heart Rate By Date | <a href="index_today.html">Today</a> | <a href="index_sleep.html">Sleep</a></h2>
     
     <div class="button-output-container">
         <button onclick="getNewData()">Get New Data</button>
         <pre id="output"></pre>
     </div>
-    
+
     <label for="start">Start Date:</label>
     <input type="date" id="start">
     <label for="end">End Date:</label>
@@ -25,15 +25,17 @@
     <button onclick="changeDateRange(1)">&#x2b;</button>
     <button onclick="loadData()">Load Data</button>
 
-    <div id="hrv_by_date_line" style="width:100%;height:600px;"></div>
+    <div id="rhr_by_date_line" style="width:100%;height:600px;"></div>
 
     <script>
+
         window.onload = () => {
             // Set default dates
             let endDate = new Date();
             let startDate = new Date();
-            startDate.setDate(endDate.getDate() - 1350); // set start x days earlier than today
+            startDate.setHours(0, 0, 0, 0);
             endDate.setHours(0, 0, 0, 0);
+            startDate.setDate(endDate.getDate() - 1600);
             document.getElementById('start').valueAsDate = startDate;
             document.getElementById('end').valueAsDate = endDate;
             loadData();  // Initial update to draw all charts based on the default selection
@@ -43,26 +45,26 @@
             const startDate = document.getElementById('start').value;
             const endDate = document.getElementById('end').value;
 
-            fetch(`http://localhost:3000/api/hrv_daily?start=${startDate}&end=${endDate}`)
+            fetch(`http://localhost:3000/api/hr_daily?start=${startDate}&end=${endDate}`)
                 .then(response => response.json())
                 .then(data => {
                     const dates = data.map(item => {
                         // Append time part to ensure local midnight
-                        const localDate = new Date(item.date + 'T00:00:00'); 
+                        const localDate = new Date(item.date + 'T00:00:00');
                         return localDate;
                     });
-                    const dailyAvg = data.map(item => item.dailyAverageRmssd);
-                    const dailyMax = data.map(item => item.dailyMaxRmssd);
-                    const dailyMin = data.map(item => item.dailyMinRmssd);
+                    const restingHeartRates = data.map(item => item.restingHeartRate);
+                    const dailyAvg = data.map(item => item.dailyAvg);
+                    const dailyMax = data.map(item => item.dailyMax);
+                    const dailyMin = data.map(item => item.dailyMin);
 
                     var traces = [
                         {
-                            name: 'Daily Avg',
                             x: dates,
-                            y: dailyAvg,
+                            y: restingHeartRates,
                             mode: 'lines+markers',
                             type: 'scatter',
-                            name: 'RMSSD Daily Avg',
+                            name: 'Resting Heart Rate',
                             marker: {
                                 color: 'black',
                                 size: 3
@@ -91,12 +93,11 @@
                                     width: 1 // Border width
                                 }
                             },
-                            name: 'RMSSD Range'
-                        },
+                            name: 'Heart Rate Range'
+                        }
                     ];
-
                     var layout = {
-                        title: 'HRV (RMSSD) Daily Average By Date',
+                        title: 'Resting Heart Rate By Date',
                         barmode: 'stack',
                         xaxis: {
                             title: '',
@@ -104,26 +105,27 @@
                             tickfont: { size: 10 },
                             tickformat: "%Y-%m-%d",
                             tickangle: -45,
-                            //tickmode: 'array',
-                            //tickvals: dates,
                         },
                         yaxis: {
                             title: '',
-                            range: [5, 120],
-                            tick0: 5,  // This sets the starting tick at x
-                            dtick: 5,  // This sets the ticks to appear every x units
+                            range: [30, 190],
+                            tick0: 30,  // This sets the starting tick at 30
+                            dtick: 5,  // This sets the ticks to appear every 10 units
                             tickfont: { size: 10 },
                         },
                         legend: {
                             x: 1,
                             xanchor: 'left',
                             y: 1
-                        },
+                        }
                     };
 
-                    Plotly.newPlot('hrv_by_date_line', traces, layout);
+                    Plotly.newPlot('rhr_by_date_line', traces, layout);
                 })
-                .catch(error => console.error('Error loading data:', error));
+                .catch(error => {
+                    console.error('Error loading data:', error);
+                    alert('An error occurred while loading the data. Please try again.');
+                });
         }
 
         function changeDateRange(days) {
@@ -142,7 +144,7 @@
         }
         
     </script>
-    <script src="js/get_new_data.js"></script>
+
 </body>
 
 </html>
